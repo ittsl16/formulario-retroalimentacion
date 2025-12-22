@@ -1368,19 +1368,24 @@ let GITHUB_CONFIG = {
 };
 
 // Función para cargar configuración
+// Función para cargar configuración guardada
 function loadGitHubConfig() {
     const savedConfig = localStorage.getItem('github_config');
     if (savedConfig) {
-        const config = JSON.parse(savedConfig);
-        GITHUB_CONFIG.username = config.username;
-        GITHUB_CONFIG.repo = config.repo || 'retroalimentacion-db';
-        GITHUB_CONFIG.token = config.token || null; // Cargar token si existe
-    }
-    
-    // Mostrar botón de configuración si no está configurado
-    const configBtn = document.getElementById('btn-config-github');
-    if (configBtn && (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username)) {
-        configBtn.classList.remove('hidden');
+        try {
+            const config = JSON.parse(savedConfig);
+            GITHUB_CONFIG.username = config.username || null;
+            GITHUB_CONFIG.repo = config.repo || 'retroalimentacion-db';
+            GITHUB_CONFIG.token = config.token || null; // Token puede estar o no
+            
+            console.log('Configuración de GitHub cargada:', {
+                username: GITHUB_CONFIG.username,
+                repo: GITHUB_CONFIG.repo,
+                tokenConfigured: !!GITHUB_CONFIG.token
+            });
+        } catch (error) {
+            console.error('Error cargando configuración:', error);
+        }
     }
 }
         // ============================================
@@ -1531,33 +1536,36 @@ function getDefaultData(filename) {
         }
 
         // Función para cargar todos los datos
-        async function loadAllData() {
-            try {
-                // Cargar configuración de GitHub primero
-                const savedConfig = localStorage.getItem('github_config');
-                if (savedConfig) {
-                    const config = JSON.parse(savedConfig);
-                    GITHUB_CONFIG.username = config.username;
-                    GITHUB_CONFIG.repo = config.repo;
-                    // El token no se guarda por seguridad, se pide al usuario
-                }
-                
-                const [loadedFeedbacks, counters] = await Promise.all([
-                    loadFromGitHub(GITHUB_CONFIG.feedbackFile),
-                    loadFromGitHub(GITHUB_CONFIG.countersFile)
-                ]);
-                
-                feedbacks = loadedFeedbacks;
-                nextFolioEscrita = counters.nextFolioEscrita || 1;
-                nextFolioVerbal = counters.nextFolioVerbal || 1;
-                
-                console.log(`Loaded ${feedbacks.length} feedbacks`);
-                return true;
-            } catch (error) {
-                console.error('Error loading data:', error);
-                return false;
-            }
-        }
+      // Función para cargar todos los datos
+async function loadAllData() {
+    try {
+        // Cargar configuración de GitHub primero
+        loadGitHubConfig();
+        
+        console.log('Estado de GitHub:', {
+            token: GITHUB_CONFIG.token ? 'Configurado' : 'No configurado',
+            username: GITHUB_CONFIG.username,
+            repo: GITHUB_CONFIG.repo
+        });
+        
+        const [loadedFeedbacks, counters] = await Promise.all([
+            loadFromGitHub(GITHUB_CONFIG.feedbackFile),
+            loadFromGitHub(GITHUB_CONFIG.countersFile)
+        ]);
+        
+        feedbacks = loadedFeedbacks;
+        nextFolioEscrita = counters.nextFolioEscrita || 1;
+        nextFolioVerbal = counters.nextFolioVerbal || 1;
+        
+        console.log(`Datos cargados: ${feedbacks.length} feedbacks`);
+        console.log('Fuente:', counters.source || 'localStorage');
+        
+        return true;
+    } catch (error) {
+        console.error('Error loading data:', error);
+        return false;
+    }
+}
 
         // Función para guardar todos los datos
         async function saveAllData() {
@@ -1639,46 +1647,145 @@ function getDefaultData(filename) {
         // ============================================
         // INICIALIZACIÓN DE LA APLICACIÓN
         // ============================================
+       // Función para cargar configuración de GitHub desde localStorage
+function loadGitHubConfig() {
+    const savedConfig = localStorage.getItem('github_config');
+    if (savedConfig) {
+        try {
+            const config = JSON.parse(savedConfig);
+            GITHUB_CONFIG.username = config.username || null;
+            GITHUB_CONFIG.repo = config.repo || 'retroalimentacion-db';
+            GITHUB_CONFIG.token = config.token || null;
+            
+            console.log('Configuración GitHub cargada:', {
+                username: GITHUB_CONFIG.username,
+                repo: GITHUB_CONFIG.repo,
+                tokenConfigurado: !!GITHUB_CONFIG.token
+            });
+        } catch (error) {
+            console.error('Error cargando configuración GitHub:', error);
+        }
+    }
+}
+
+// Función para pedir configuración GitHub al usuario
+function promptGitHubConfig() {
+    const username = prompt('Ingresa tu nombre de usuario de GitHub:', GITHUB_CONFIG.username || '');
+    if (!username) {
+        alert('Configuración cancelada');
+        return;
+    }
+    
+    const token = prompt('Ingresa tu token de acceso personal de GitHub:');
+    if (!token) {
+        alert('Configuración cancelada');
+        return;
+    }
+    
+    const repo = prompt('Ingresa el nombre del repositorio:', GITHUB_CONFIG.repo || 'retroalimentacion-db');
+    
+    // Actualizar configuración
+    GITHUB_CONFIG.username = username;
+    GITHUB_CONFIG.token = token;
+    GITHUB_CONFIG.repo = repo || 'retroalimentacion-db';
+    
+    // Guardar en localStorage
+    localStorage.setItem('github_config', JSON.stringify({
+        username: username,
+        token: token,
+        repo: repo || 'retroalimentacion-db'
+    }));
+    
+    alert('✅ Configuración de GitHub guardada.\nLos datos ahora se guardarán en la nube.');
+    
+    // Ocultar botón de configuración
+    document.getElementById('btn-config-github').classList.add('hidden');
+    
+    // Recargar datos desde GitHub
+    loadAllData().then(() => {
+        if (currentUser === 'admin') {
+            actualizarDashboard();
+        }
+        alert('✅ Datos sincronizados con GitHub exitosamente.');
+    }).catch(error => {
+        console.error('Error sincronizando con GitHub:', error);
+        alert('⚠️ Error al sincronizar con GitHub. Verifica tu token y conexión.');
+    });
+} 
+      document.addEventListener('DOMContentLoaded', async function() {
+    // 1. PRIMERO CARGAR CONFIGURACIÓN DE GITHUB
+    loadGitHubConfig();
+    
+    // 2. CONFIGURAR LOS CANVAS DE FIRMAS
+    initializeAllCanvas();
+    
+    // 3. CONFIGURAR EVENT LISTENERS BÁSICOS
+    setupBasicEventListeners();
+    
+    // 4. CARGAR DATOS (desde GitHub o localStorage)
+    await loadAllData();
+    
+    // 5. CONFIGURAR EL RESTO DE LA APLICACIÓN
+    cargarLideres();
+    actualizarFechas();
+    
+    // 6. CONFIGURAR EVENT LISTENERS COMPLETOS
+    setupEventListeners();
+    
+    // 7. VERIFICAR SI HAY USUARIO LOGEADO (sesión previa)
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser && USERS[savedUser]) {
+        currentUser = savedUser;
+        showApp();
         
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Primero configurar los canvas
-            initializeAllCanvas();
-            
-            // Configurar event listeners básicos
-            setupBasicEventListeners();
-            
-            // Cargar datos
-            await loadAllData();
-            
-            // Configurar el resto
-            cargarLideres();
-            actualizarFechas();
-            
-            // Configurar event listeners completos
-            setupEventListeners();
-            
-            // Verificar si hay usuario logeado
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser && USERS[savedUser]) {
-                currentUser = savedUser;
-                showApp();
-                
-                // Mostrar rol del usuario
-                document.getElementById('user-role-display').textContent = USERS[currentUser].name;
-                
-                // Configurar interfaz según rol
-                if (currentUser === 'admin') {
-                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.add('hidden'));
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-                    showTab('admin');
-                    actualizarDashboard();
-                } else {
-                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.remove('hidden'));
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-                    showTab('form-escrita');
-                }
+        // Mostrar rol del usuario en la interfaz
+        document.getElementById('user-role-display').textContent = USERS[currentUser].name;
+        
+        // Mostrar botón de configuración GitHub si es admin y no está configurado
+        if (currentUser === 'admin') {
+            const configBtn = document.getElementById('btn-config-github');
+            if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
+                configBtn.classList.remove('hidden');
             }
-        });
+            
+            // Configurar botón de configuración GitHub
+            configBtn.addEventListener('click', () => {
+                promptGitHubConfig();
+            });
+        }
+        
+        // Configurar interfaz según rol del usuario
+        if (currentUser === 'admin') {
+            // ADMIN: Mostrar solo panel de administrador
+            document.querySelectorAll('.supervisor-only').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+            showTab('admin');
+            actualizarDashboard();
+        } else {
+            // SUPERVISOR: Mostrar formularios
+            document.querySelectorAll('.supervisor-only').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+            showTab('form-escrita');
+        }
+        
+        // Mostrar mensaje informativo si GitHub no está configurado
+        if (!GITHUB_CONFIG.token && currentUser === 'admin') {
+            setTimeout(() => {
+                console.log('GitHub no configurado. Los datos se guardarán en localStorage.');
+            }, 1000);
+        }
+    }
+    
+    // 8. CONFIGURAR BOTÓN DE CONFIGURACIÓN GITHUB EN LOGIN (para admin nuevo)
+    document.getElementById('btn-config-github').addEventListener('click', () => {
+        promptGitHubConfig();
+    });
+    
+    // 9. CONFIGURAR BOTÓN DE GUARDAR CONFIGURACIÓN EN LOGIN
+    document.getElementById('btn-save-github-config').addEventListener('click', () => {
+        saveGitHubConfig();
+    });
+});
         
         // ============================================
         // FUNCIONES PARA CANVAS DE FIRMAS
@@ -1886,38 +1993,41 @@ function getDefaultData(filename) {
         }
         
         function saveGitHubConfig() {
-            const username = document.getElementById('github-username').value;
-            const token = document.getElementById('github-token').value;
-            const repo = document.getElementById('github-repo').value || 'retroalimentacion-db';
-            
-            if (!username || !token) {
-                alert('Por favor ingresa tu nombre de usuario y token de GitHub');
-                return;
-            }
-            
-            // Guardar configuración en variables
-            GITHUB_CONFIG.username = username;
-            GITHUB_CONFIG.token = token;
-            GITHUB_CONFIG.repo = repo;
-            
-            // Guardar en localStorage (sin el token por seguridad)
-            localStorage.setItem('github_config', JSON.stringify({
-                username: username,
-                repo: repo
-            }));
-            
-            alert('Configuración de GitHub guardada exitosamente. Los datos se guardarán en la nube.');
-            
-            // Ocultar sección de configuración
-            document.getElementById('github-config-section').classList.add('hidden');
-            
-            // Recargar datos desde GitHub
-            loadAllData().then(() => {
-                if (currentUser === 'admin') {
-                    actualizarDashboard();
-                }
-            });
+    const username = document.getElementById('github-username').value;
+    const token = document.getElementById('github-token').value;
+    const repo = document.getElementById('github-repo').value || 'retroalimentacion-db';
+    
+    if (!username || !token) {
+        alert('Por favor ingresa tu nombre de usuario y token de GitHub');
+        return;
+    }
+    
+    // Actualizar configuración
+    GITHUB_CONFIG.username = username;
+    GITHUB_CONFIG.token = token;
+    GITHUB_CONFIG.repo = repo;
+    
+    // Guardar en localStorage (ADVERTENCIA: el token se guarda en texto plano)
+    localStorage.setItem('github_config', JSON.stringify({
+        username: username,
+        token: token, // Se guarda el token
+        repo: repo
+    }));
+    
+    alert('✅ Configuración de GitHub guardada exitosamente. Los datos se guardarán en la nube.');
+    
+    // Ocultar sección de configuración
+    document.getElementById('github-config-section').classList.add('hidden');
+    document.getElementById('btn-config-github').classList.add('hidden');
+    
+    // Recargar datos desde GitHub
+    loadAllData().then(() => {
+        if (currentUser === 'admin') {
+            actualizarDashboard();
         }
+        alert('Datos sincronizados con GitHub exitosamente.');
+    });
+}
         
         function promptGitHubConfig() {
     const username = prompt('Ingresa tu nombre de usuario de GitHub:', GITHUB_CONFIG.username || '');
