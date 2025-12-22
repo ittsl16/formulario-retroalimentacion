@@ -6,7 +6,6 @@
     <title>Formulario de Retroalimentación</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Tus estilos CSS se mantienen exactamente iguales */
         :root {
             --primary-color: #CF002E;
             --secondary-color: #FDD000;
@@ -332,7 +331,7 @@
             background-color: rgba(207, 0, 46, 0.05);
         }
         
-        /* Firma digital - CORREGIDO */
+        /* Firma digital */
         .signature-container {
             border: 1px solid var(--medium-gray);
             border-radius: var(--border-radius);
@@ -1023,7 +1022,6 @@
                                     <option value="Cuadrilla C">Cuadrilla C</option>
                                     <option value="Cuadrilla D">Cuadrilla D</option>
                                     <option value="Otra">Otra</option>
-                                    
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1342,7 +1340,7 @@
     </div>
 
     <script>
-       // ============================================
+// ============================================
 // CONFIGURACIÓN INICIAL Y ESTADO DE LA APLICACIÓN
 // ============================================
 
@@ -1357,6 +1355,8 @@ let currentUser = null;
 let feedbacks = [];
 let nextFolioEscrita = 1;
 let nextFolioVerbal = 1;
+let sessionTimeout = null;
+const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 horas
 
 // Configuración de GitHub para almacenamiento
 let GITHUB_CONFIG = {
@@ -1367,7 +1367,72 @@ let GITHUB_CONFIG = {
     countersFile: 'counters.json'
 };
 
-// Función para cargar configuración guardada
+// ============================================
+// FUNCIONES DE SESIÓN Y SEGURIDAD
+// ============================================
+
+function initSession() {
+    const sessionUser = localStorage.getItem('session_user');
+    const sessionTime = localStorage.getItem('session_time');
+    
+    if (sessionUser && sessionTime) {
+        const timeElapsed = Date.now() - parseInt(sessionTime);
+        
+        if (timeElapsed < SESSION_DURATION) {
+            currentUser = sessionUser;
+            showApp();
+            setupUserInterface();
+            resetSessionTimer();
+            return true;
+        } else {
+            clearSession();
+        }
+    }
+    return false;
+}
+
+function resetSessionTimer() {
+    if (sessionTimeout) clearTimeout(sessionTimeout);
+    
+    sessionTimeout = setTimeout(() => {
+        alert('Tu sesión ha expirado por inactividad');
+        handleLogout();
+    }, SESSION_DURATION);
+    
+    localStorage.setItem('session_time', Date.now());
+}
+
+function clearSession() {
+    localStorage.removeItem('session_user');
+    localStorage.removeItem('session_time');
+    localStorage.removeItem('currentUser');
+    if (sessionTimeout) clearTimeout(sessionTimeout);
+    currentUser = null;
+}
+
+function handleLogout() {
+    if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        return;
+    }
+    
+    clearSession();
+    
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('login-screen').classList.remove('hidden');
+    
+    document.getElementById('user-role').value = '';
+    document.getElementById('user-password').value = '';
+    
+    resetFormEscrita();
+    resetFormVerbal();
+    
+    console.log('✅ Sesión cerrada exitosamente');
+}
+
+// ============================================
+// FUNCIONES DE ALMACENAMIENTO EN GITHUB
+// ============================================
+
 function loadGitHubConfig() {
     const savedConfig = localStorage.getItem('github_config');
     if (savedConfig) {
@@ -1388,18 +1453,12 @@ function loadGitHubConfig() {
     }
 }
 
-// ============================================
-// FUNCIONES DE ALMACENAMIENTO EN GITHUB - SIMPLIFICADAS
-// ============================================
-
-// Función simplificada para verificar conexión a GitHub
 async function probarConexionGitHub() {
     try {
         if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
             return { conectado: false, error: 'No configurado' };
         }
         
-        // Probar conexión básica a GitHub API
         const response = await fetch('https://api.github.com/user', {
             headers: {
                 'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
@@ -1432,7 +1491,6 @@ async function probarConexionGitHub() {
     }
 }
 
-// Función para verificar si el repositorio existe (mejorada)
 async function verificarRepositorioGitHub() {
     try {
         const conexion = await probarConexionGitHub();
@@ -1440,7 +1498,6 @@ async function verificarRepositorioGitHub() {
             return { existe: false, error: conexion.error };
         }
         
-        // Intentar acceder al repositorio
         const response = await fetch(
             `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}`,
             {
@@ -1469,7 +1526,6 @@ async function verificarRepositorioGitHub() {
             };
         }
         
-        // Otro error
         const errorData = await response.json();
         return { 
             existe: false, 
@@ -1485,7 +1541,6 @@ async function verificarRepositorioGitHub() {
     }
 }
 
-// Función para crear repositorio en GitHub
 async function crearRepositorioGitHub() {
     try {
         const conexion = await probarConexionGitHub();
@@ -1505,10 +1560,10 @@ async function crearRepositorioGitHub() {
             body: JSON.stringify({
                 name: GITHUB_CONFIG.repo,
                 description: 'Base de datos para retroalimentaciones',
-                private: false, // Cambia a true si quieres privado
-                auto_init: true, // Inicializar con README
-                gitignore_template: 'Node', // Template de gitignore
-                license_template: 'mit' // Licencia MIT
+                private: false,
+                auto_init: true,
+                gitignore_template: 'Node',
+                license_template: 'mit'
             })
         });
         
@@ -1525,7 +1580,6 @@ async function crearRepositorioGitHub() {
         const errorData = await response.json();
         console.error('Error creando repositorio:', errorData);
         
-        // Si ya existe, verificar si podemos acceder
         if (errorData.errors && errorData.errors.some(e => e.message.includes('already exists'))) {
             console.log('El repositorio ya existe, verificando acceso...');
             const verificacion = await verificarRepositorioGitHub();
@@ -1550,17 +1604,14 @@ async function crearRepositorioGitHub() {
     }
 }
 
-// Función principal para guardar en GitHub
 async function saveToGitHub(filename, data) {
     try {
-        // Verificar configuración básica
         if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
             console.log('GitHub no configurado, usando localStorage');
             localStorage.setItem(filename, JSON.stringify(data));
             return { success: true, source: 'localStorage' };
         }
         
-        // Primero verificar si tenemos conexión
         const conexion = await probarConexionGitHub();
         if (!conexion.conectado) {
             console.log('Sin conexión a GitHub, usando localStorage:', conexion.error);
@@ -1568,13 +1619,11 @@ async function saveToGitHub(filename, data) {
             return { success: true, source: 'localStorage', error: conexion.error };
         }
         
-        // Verificar si el repositorio existe
         const repoInfo = await verificarRepositorioGitHub();
         if (!repoInfo.existe) {
             console.log('Repositorio no disponible, usando localStorage:', repoInfo.error);
             localStorage.setItem(filename, JSON.stringify(data));
             
-            // Intentar crear el repositorio automáticamente
             setTimeout(async () => {
                 const creado = await crearRepositorioGitHub();
                 if (creado.creado) {
@@ -1585,7 +1634,6 @@ async function saveToGitHub(filename, data) {
             return { success: true, source: 'localStorage', repoError: repoInfo.error };
         }
         
-        // Obtener SHA del archivo existente (si existe)
         let sha = null;
         try {
             const shaResponse = await fetch(
@@ -1606,11 +1654,9 @@ async function saveToGitHub(filename, data) {
             console.log(`Archivo ${filename} no existe, se creará nuevo`);
         }
         
-        // Preparar contenido
         const contenido = JSON.stringify(data, null, 2);
         const content = btoa(unescape(encodeURIComponent(contenido)));
         
-        // Configurar la solicitud
         const body = {
             message: `Actualizar ${filename} - ${new Date().toISOString()}`,
             content: content,
@@ -1619,7 +1665,6 @@ async function saveToGitHub(filename, data) {
         
         console.log(`Subiendo ${filename} a GitHub...`);
         
-        // Subir a GitHub
         const response = await fetch(
             `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`,
             {
@@ -1637,7 +1682,6 @@ async function saveToGitHub(filename, data) {
             const errorData = await response.json();
             console.error('Error GitHub:', errorData);
             
-            // Si es error 404 o 403, el repositorio no existe o no tenemos acceso
             if (response.status === 404 || response.status === 403) {
                 console.log('No se puede acceder al repositorio, usando localStorage');
                 localStorage.setItem(filename, JSON.stringify(data));
@@ -1662,7 +1706,6 @@ async function saveToGitHub(filename, data) {
     } catch (error) {
         console.error(`❌ Error guardando en GitHub (${filename}):`, error.message);
         
-        // Fallback a localStorage
         localStorage.setItem(filename, JSON.stringify(data));
         console.log(`Usando localStorage para ${filename}`);
         
@@ -1674,17 +1717,14 @@ async function saveToGitHub(filename, data) {
     }
 }
 
-// Función para cargar desde GitHub
 async function loadFromGitHub(filename) {
     try {
-        // Verificar configuración básica
         if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
             console.log('GitHub no configurado, usando localStorage');
             const localData = localStorage.getItem(filename);
             return localData ? JSON.parse(localData) : getDefaultData(filename);
         }
         
-        // Verificar repositorio
         const repoInfo = await verificarRepositorioGitHub();
         if (!repoInfo.existe) {
             console.log('Repositorio no disponible, usando localStorage');
@@ -1692,7 +1732,6 @@ async function loadFromGitHub(filename) {
             return localData ? JSON.parse(localData) : getDefaultData(filename);
         }
         
-        // Intentar cargar desde GitHub
         const response = await fetch(
             `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`,
             {
@@ -1714,7 +1753,6 @@ async function loadFromGitHub(filename) {
         
         const data = await response.json();
         
-        // Decodificar contenido
         const decodedContent = decodeURIComponent(escape(atob(data.content)));
         console.log(`✅ Cargado desde GitHub: ${filename}`);
         return JSON.parse(decodedContent);
@@ -1722,14 +1760,12 @@ async function loadFromGitHub(filename) {
     } catch (error) {
         console.error(`Error cargando ${filename} desde GitHub:`, error.message);
         
-        // Fallback a localStorage
         const localData = localStorage.getItem(filename);
         if (localData) {
             console.log(`Usando localStorage para ${filename}`);
             return JSON.parse(localData);
         }
         
-        // Si no hay datos en localStorage, usar datos por defecto
         console.log(`Creando ${filename} por defecto`);
         return getDefaultData(filename);
     }
@@ -1747,10 +1783,8 @@ function getDefaultData(filename) {
     return null;
 }
 
-// Función para cargar todos los datos
 async function loadAllData() {
     try {
-        // Cargar configuración de GitHub
         loadGitHubConfig();
         
         console.log('Estado de GitHub:', {
@@ -1778,7 +1812,6 @@ async function loadAllData() {
     }
 }
 
-// Función para guardar todos los datos
 async function saveAllData() {
     try {
         const feedbacksPromise = saveToGitHub(GITHUB_CONFIG.feedbackFile, feedbacks);
@@ -1795,352 +1828,71 @@ async function saveAllData() {
         return false;
     }
 }
-        // Función auxiliar para capturar firmas de los canvas
-        function capturarFirmas(formType = 'escrita') {
-            const firmas = {};
-            
-            // Función para verificar si el canvas tiene contenido
-            function canvasTieneContenido(canvas) {
-                if (!canvas) return false;
-                const ctx = canvas.getContext('2d');
-                const pixelBuffer = new Uint32Array(
-                    ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
-                );
-                return pixelBuffer.some(color => color !== 0);
-            }
-            
-            if (formType === 'escrita') {
-                const canvasIds = [
-                    'signature-canvas-colaborador',
-                    'signature-canvas-supervisor',
-                    'signature-canvas-sindical',
-                    'signature-canvas-rh'
-                ];
-                
-                const nombres = ['colaborador', 'supervisor', 'sindical', 'rh'];
-                
-                canvasIds.forEach((canvasId, index) => {
-                    const canvas = document.getElementById(canvasId);
-                    if (canvas && canvasTieneContenido(canvas)) {
-                        firmas[nombres[index]] = canvas.toDataURL('image/png');
-                    }
-                });
-            } else if (formType === 'verbal') {
-                const canvasIds = [
-                    'signature-canvas-verbal-colaborador',
-                    'signature-canvas-verbal-supervisor'
-                ];
-                
-                const nombres = ['colaborador', 'supervisor'];
-                
-                canvasIds.forEach((canvasId, index) => {
-                    const canvas = document.getElementById(canvasId);
-                    if (canvas && canvasTieneContenido(canvas)) {
-                        firmas[nombres[index]] = canvas.toDataURL('image/png');
-                    }
-                });
-            }
-            
-            return firmas;
-        }
-        
-        // Líderes disponibles
-        const lideres = [
-            {id: "1042", nombre: "RODRIGUEZ ALAMILLA JUAN FELIX", rol: "SUPERVISOR", area: "C"},
-            {id: "1064", nombre: "CASTILLO RODRIGUEZ SERGIO", rol: "SUPERVISOR SENIOR", area: "C"},
-            {id: "1813", nombre: "VILLAGOMEZ RAMIREZ MARIO", rol: "SUPERVISOR", area: "D"},
-            {id: "3846", nombre: "BRIOSO PEREZ JESUS GUADALUPE", rol: "SUPERVISOR", area: "A"},
-            {id: "4497", nombre: "CORTEZ ACUÑA IGNACIO", rol: "SUPERVISOR SENIOR", area: "B"},
-            {id: "73313", nombre: "HERNANDEZ GARDUÑO CARLOS ADRIAN", rol: "GERENTE", area: "GERENCIA"}
+
+// ============================================
+// FUNCIONES AUXILIARES
+// ============================================
+
+function capturarFirmas(formType = 'escrita') {
+    const firmas = {};
+    
+    function canvasTieneContenido(canvas) {
+        if (!canvas) return false;
+        const ctx = canvas.getContext('2d');
+        const pixelBuffer = new Uint32Array(
+            ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+        );
+        return pixelBuffer.some(color => color !== 0);
+    }
+    
+    if (formType === 'escrita') {
+        const canvasIds = [
+            'signature-canvas-colaborador',
+            'signature-canvas-supervisor',
+            'signature-canvas-sindical',
+            'signature-canvas-rh'
         ];
         
-        // ============================================
-        // INICIALIZACIÓN DE LA APLICACIÓN
-        // ============================================
+        const nombres = ['colaborador', 'supervisor', 'sindical', 'rh'];
         
-        document.addEventListener('DOMContentLoaded', async function() {
-            // 1. PRIMERO CARGAR CONFIGURACIÓN DE GITHUB
-            loadGitHubConfig();
-            
-            // 2. CONFIGURAR LOS CANVAS DE FIRMAS
-            initializeAllCanvas();
-            
-            // 3. CONFIGURAR EVENT LISTENERS BÁSICOS
-            setupBasicEventListeners();
-            
-            // 4. CARGAR DATOS (desde GitHub o localStorage)
-            await loadAllData();
-            
-            // 5. CONFIGURAR EL RESTO DE LA APLICACIÓN
-            cargarLideres();
-            actualizarFechas();
-            
-            // 6. CONFIGURAR EVENT LISTENERS COMPLETOS
-            setupEventListeners();
-            
-            // 7. VERIFICAR SI HAY USUARIO LOGEADO (sesión previa)
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser && USERS[savedUser]) {
-                currentUser = savedUser;
-                showApp();
-                
-                // Mostrar rol del usuario en la interfaz
-                document.getElementById('user-role-display').textContent = USERS[currentUser].name;
-                
-                // Mostrar botón de configuración GitHub si es admin y no está configurado
-                if (currentUser === 'admin') {
-                    const configBtn = document.getElementById('btn-config-github');
-                    if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
-                        configBtn.classList.remove('hidden');
-                    }
-                    
-                    // Configurar botón de configuración GitHub
-                    configBtn.addEventListener('click', () => {
-                        promptGitHubConfig();
-                    });
-                }
-                
-                // Configurar interfaz según rol del usuario
-                if (currentUser === 'admin') {
-                    // ADMIN: Mostrar solo panel de administrador
-                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.add('hidden'));
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-                    showTab('admin');
-                    actualizarDashboard();
-                } else {
-                    // SUPERVISOR: Mostrar formularios
-                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.remove('hidden'));
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-                    showTab('form-escrita');
-                }
-                
-                // Mostrar mensaje informativo si GitHub no está configurado
-                if (!GITHUB_CONFIG.token && currentUser === 'admin') {
-                    setTimeout(() => {
-                        console.log('GitHub no configurado. Los datos se guardarán en localStorage.');
-                    }, 1000);
-                }
-            }
-            
-            // 8. CONFIGURAR BOTÓN DE CONFIGURACIÓN GITHUB EN LOGIN (para admin nuevo)
-            document.getElementById('btn-config-github').addEventListener('click', () => {
-                promptGitHubConfig();
-            });
-            
-            // 9. CONFIGURAR BOTÓN DE GUARDAR CONFIGURACIÓN EN LOGIN
-            document.getElementById('btn-save-github-config').addEventListener('click', () => {
-                saveGitHubConfig();
-            });
-        });
-        
-        // ============================================
-        // FUNCIONES PARA CANVAS DE FIRMAS
-        // ============================================
-        
-        function initializeAllCanvas() {
-            // Configurar todos los canvas de firmas
-            const canvasConfigs = [
-                // Formulario escrito
-                {id: 'signature-canvas-colaborador', clearBtn: 'clear-colaborador'},
-                {id: 'signature-canvas-supervisor', clearBtn: 'clear-supervisor'},
-                {id: 'signature-canvas-sindical', clearBtn: 'clear-sindical'},
-                {id: 'signature-canvas-rh', clearBtn: 'clear-rh'},
-                // Formulario verbal
-                {id: 'signature-canvas-verbal-colaborador', clearBtn: 'clear-verbal-colaborador'},
-                {id: 'signature-canvas-verbal-supervisor', clearBtn: 'clear-verbal-supervisor'}
-            ];
-            
-            canvasConfigs.forEach(config => {
-                initializeCanvas(config.id, config.clearBtn);
-            });
-        }
-        
-        function initializeCanvas(canvasId, clearBtnId) {
+        canvasIds.forEach((canvasId, index) => {
             const canvas = document.getElementById(canvasId);
-            if (!canvas) {
-                console.warn(`Canvas no encontrado: ${canvasId}`);
-                return;
+            if (canvas && canvasTieneContenido(canvas)) {
+                firmas[nombres[index]] = canvas.toDataURL('image/png');
             }
-            
-            // Obtener contexto 2D
-            const ctx = canvas.getContext('2d');
-            
-            // Configurar tamaño del canvas
-            const updateCanvasSize = () => {
-                const parentWidth = canvas.parentElement.clientWidth;
-                canvas.width = parentWidth;
-                canvas.height = 150;
-                
-                // Limpiar y establecer fondo blanco
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.strokeStyle = '#333333';
-                ctx.lineWidth = 2;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-            };
-            
-            // Actualizar tamaño inicial
-            updateCanvasSize();
-            
-            // Variables para el dibujo
-            let isDrawing = false;
-            let lastX = 0;
-            let lastY = 0;
-            
-            // Función para comenzar a dibujar
-            function startDrawing(e) {
-                isDrawing = true;
-                [lastX, lastY] = getCoordinates(e);
-            }
-            
-            // Función para dibujar
-            function draw(e) {
-                if (!isDrawing) return;
-                
-                const [x, y] = getCoordinates(e);
-                
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                
-                [lastX, lastY] = [x, y];
-            }
-            
-            // Función para detener el dibujo
-            function stopDrawing() {
-                isDrawing = false;
-            }
-            
-            // Función para obtener coordenadas
-            function getCoordinates(e) {
-                let x, y;
-                
-                if (e.type.includes('mouse')) {
-                    x = e.offsetX;
-                    y = e.offsetY;
-                } else if (e.type.includes('touch')) {
-                    const rect = canvas.getBoundingClientRect();
-                    x = e.touches[0].clientX - rect.left;
-                    y = e.touches[0].clientY - rect.top;
-                }
-                
-                return [x, y];
-            }
-            
-            // Eventos de ratón
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
-            
-            // Eventos táctiles
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                startDrawing(e);
-            });
-            
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                draw(e);
-            });
-            
-            canvas.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                stopDrawing();
-            });
-            
-            // Configurar botón limpiar
-            const clearBtn = document.getElementById(clearBtnId);
-            if (clearBtn) {
-                clearBtn.addEventListener('click', () => {
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.strokeStyle = '#333333';
-                    ctx.lineWidth = 2;
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-                });
-            }
-            
-            // Actualizar tamaño cuando cambie el tamaño de la ventana
-            window.addEventListener('resize', updateCanvasSize);
-        }
+        });
+    } else if (formType === 'verbal') {
+        const canvasIds = [
+            'signature-canvas-verbal-colaborador',
+            'signature-canvas-verbal-supervisor'
+        ];
         
-        // ============================================
-        // AUTENTICACIÓN Y CONFIGURACIÓN
-        // ============================================
+        const nombres = ['colaborador', 'supervisor'];
         
-        function setupBasicEventListeners() {
-            document.getElementById('btn-login').addEventListener('click', handleLogin);
-            document.getElementById('user-password').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('btn-login').click();
-                }
-            });
-        }
-        
-        async function handleLogin() {
-            const role = document.getElementById('user-role').value;
-            const password = document.getElementById('user-password').value;
-            const errorMsg = document.getElementById('login-error');
-            
-            if (!role || !password) {
-                errorMsg.querySelector('span').textContent = 'Por favor complete todos los campos';
-                errorMsg.classList.remove('hidden');
-                return;
+        canvasIds.forEach((canvasId, index) => {
+            const canvas = document.getElementById(canvasId);
+            if (canvas && canvasTieneContenido(canvas)) {
+                firmas[nombres[index]] = canvas.toDataURL('image/png');
             }
-            
-            if (USERS[role] && USERS[role].password === password) {
-                // Login exitoso
-                currentUser = role;
-                
-                // Guardar en localStorage para persistencia
-                localStorage.setItem('currentUser', role);
-                
-                document.getElementById('login-screen').classList.add('hidden');
-                showApp();
-                
-                // Mostrar rol del usuario
-                document.getElementById('user-role-display').textContent = USERS[role].name;
-                
-                // Si es admin, mostrar sección de configuración si no está configurado
-                if (role === 'admin' && !GITHUB_CONFIG.token) {
-                    const configSection = document.getElementById('github-config-section');
-                    configSection.classList.remove('hidden');
-                }
-                
-                // Configurar botón de configuración de GitHub
-                document.getElementById('btn-config-github').addEventListener('click', () => {
-                    promptGitHubConfig();
-                });
-                
-                // Guardar configuración de GitHub
-                document.getElementById('btn-save-github-config').addEventListener('click', () => {
-                    saveGitHubConfig();
-                });
-                
-                // Configurar interfaz según rol
-                if (role === 'admin') {
-                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.add('hidden'));
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-                    showTab('admin');
-                    actualizarDashboard();
-                } else {
-                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.remove('hidden'));
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-                    showTab('form-escrita');
-                }
-            } else {
-                errorMsg.querySelector('span').textContent = 'Credenciales incorrectas. Intente nuevamente.';
-                errorMsg.classList.remove('hidden');
-                document.getElementById('user-password').value = '';
-                document.getElementById('user-password').focus();
-            }
-        }
-        
-        // Función mejorada para guardar configuración de GitHub
+        });
+    }
+    
+    return firmas;
+}
+
+const lideres = [
+    {id: "1042", nombre: "RODRIGUEZ ALAMILLA JUAN FELIX", rol: "SUPERVISOR", area: "C"},
+    {id: "1064", nombre: "CASTILLO RODRIGUEZ SERGIO", rol: "SUPERVISOR SENIOR", area: "C"},
+    {id: "1813", nombre: "VILLAGOMEZ RAMIREZ MARIO", rol: "SUPERVISOR", area: "D"},
+    {id: "3846", nombre: "BRIOSO PEREZ JESUS GUADALUPE", rol: "SUPERVISOR", area: "A"},
+    {id: "4497", nombre: "CORTEZ ACUÑA IGNACIO", rol: "SUPERVISOR SENIOR", area: "B"},
+    {id: "73313", nombre: "HERNANDEZ GARDUÑO CARLOS ADRIAN", rol: "GERENTE", area: "GERENCIA"}
+];
+
+// ============================================
+// FUNCIONES DE CONFIGURACIÓN GITHUB MEJORADAS
+// ============================================
+
 async function saveGitHubConfig() {
     const username = document.getElementById('github-username').value.trim();
     const token = document.getElementById('github-token').value.trim();
@@ -2151,26 +1903,23 @@ async function saveGitHubConfig() {
         return;
     }
     
-    // Validar token básico
     if (token.length < 10 || (!token.startsWith('ghp_') && !token.startsWith('github_pat_'))) {
-        alert('⚠️ El token parece no tener un formato válido.\nLos tokens generalmente empiezan con "ghp_" o "github_pat_"');
-        // Continuar de todos modos
+        const confirmar = confirm('⚠️ El token parece no tener un formato válido.\nLos tokens generalmente empiezan con "ghp_" o "github_pat_"\n\n¿Deseas continuar de todos modos?');
+        if (!confirmar) return;
     }
     
-    // Mostrar mensaje de procesamiento
-    const mensajeOriginal = document.getElementById('btn-save-github-config').innerHTML;
-    document.getElementById('btn-save-github-config').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-    document.getElementById('btn-save-github-config').disabled = true;
+    const btn = document.getElementById('btn-save-github-config');
+    const mensajeOriginal = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    btn.disabled = true;
     
     try {
-        // Actualizar configuración temporalmente
         const tempConfig = {
-            token: token,
             username: username,
+            token: token,
             repo: repo
         };
         
-        // Probar conexión con GitHub
         const conexionResponse = await fetch('https://api.github.com/user', {
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -2179,13 +1928,13 @@ async function saveGitHubConfig() {
         });
         
         if (!conexionResponse.ok) {
-            throw new Error(`Token inválido o sin permisos: ${conexionResponse.status}`);
+            const errorData = await conexionResponse.json();
+            throw new Error(`Token inválido o sin permisos: ${errorData.message || 'Error ' + conexionResponse.status}`);
         }
         
         const userData = await conexionResponse.json();
-        console.log('Usuario GitHub:', userData.login);
+        console.log('Usuario GitHub autenticado:', userData.login);
         
-        // Verificar si el nombre de usuario coincide
         if (userData.login.toLowerCase() !== username.toLowerCase()) {
             const confirmar = confirm(`El token corresponde al usuario "${userData.login}", no a "${username}".\n\n¿Deseas usar "${userData.login}" como nombre de usuario?`);
             if (confirmar) {
@@ -2193,7 +1942,6 @@ async function saveGitHubConfig() {
             }
         }
         
-        // Verificar si el repositorio existe
         const repoResponse = await fetch(
             `https://api.github.com/repos/${tempConfig.username}/${repo}`,
             {
@@ -2204,16 +1952,16 @@ async function saveGitHubConfig() {
             }
         );
         
-        let repositorioExiste = repoResponse.ok;
-        let mensajeRepositorio = '';
+        let repositorioListo = false;
+        let mensajeExtra = '';
         
-        if (!repositorioExiste && repoResponse.status === 404) {
-            // Repositorio no existe, preguntar si crearlo
+        if (repoResponse.ok) {
+            repositorioListo = true;
+            mensajeExtra = 'Repositorio verificado correctamente.';
+        } else if (repoResponse.status === 404) {
             const crear = confirm(`El repositorio "${repo}" no existe.\n\n¿Deseas crearlo automáticamente?`);
             
             if (crear) {
-                alert('🔄 Creando repositorio... Esto puede tomar unos segundos.');
-                
                 const crearResponse = await fetch('https://api.github.com/user/repos', {
                     method: 'POST',
                     headers: {
@@ -2225,30 +1973,28 @@ async function saveGitHubConfig() {
                         name: repo,
                         description: 'Base de datos para retroalimentaciones',
                         private: false,
-                        auto_init: true
+                        auto_init: true,
+                        gitignore_template: 'Node'
                     })
                 });
                 
                 if (crearResponse.ok || crearResponse.status === 201) {
-                    repositorioExiste = true;
-                    mensajeRepositorio = 'Repositorio creado exitosamente.';
+                    repositorioListo = true;
+                    mensajeExtra = '✅ Repositorio creado exitosamente.';
                 } else {
                     const errorData = await crearResponse.json();
-                    mensajeRepositorio = `No se pudo crear el repositorio: ${errorData.message || 'Error desconocido'}`;
+                    mensajeExtra = `❌ No se pudo crear el repositorio: ${errorData.message}`;
                 }
             } else {
-                mensajeRepositorio = 'Debes crear el repositorio manualmente en GitHub.com';
+                mensajeExtra = '⚠️ Debes crear el repositorio manualmente en GitHub.com';
             }
-        } else if (!repositorioExiste) {
-            const errorData = await repoResponse.json();
-            mensajeRepositorio = `Error accediendo al repositorio: ${errorData.message || 'Error desconocido'}`;
         } else {
-            mensajeRepositorio = 'Repositorio verificado correctamente.';
+            const errorData = await repoResponse.json();
+            mensajeExtra = `❌ Error accediendo al repositorio: ${errorData.message}`;
         }
         
-        // Guardar configuración final
-        GITHUB_CONFIG.token = tempConfig.token;
         GITHUB_CONFIG.username = tempConfig.username;
+        GITHUB_CONFIG.token = tempConfig.token;
         GITHUB_CONFIG.repo = repo;
         
         localStorage.setItem('github_config', JSON.stringify({
@@ -2257,1407 +2003,1561 @@ async function saveGitHubConfig() {
             repo: repo
         }));
         
-        // Mostrar resultado
-        let mensajeFinal = `✅ Configuración guardada exitosamente.\n\n`;
+        let mensajeFinal = '✅ Configuración de GitHub guardada\n\n';
         mensajeFinal += `Usuario: ${tempConfig.username}\n`;
         mensajeFinal += `Repositorio: ${repo}\n`;
-        mensajeFinal += `Estado: ${repositorioExiste ? 'Listo para usar' : 'Usando localStorage'}\n`;
-        mensajeFinal += mensajeRepositorio ? `\n${mensajeRepositorio}` : '';
+        mensajeFinal += `Estado: ${repositorioListo ? 'Listo para usar' : 'Verificación pendiente'}\n`;
+        if (mensajeExtra) mensajeFinal += `\n${mensajeExtra}`;
         
         alert(mensajeFinal);
         
-        // Ocultar sección de configuración
         document.getElementById('github-config-section').classList.add('hidden');
-        document.getElementById('btn-config-github').classList.add('hidden');
-        
-        // Recargar datos
-        await loadAllData();
         
         if (currentUser === 'admin') {
-            actualizarDashboard();
+            document.getElementById('btn-config-github').classList.add('hidden');
         }
         
+        await loadAllData();
+        
     } catch (error) {
-        console.error('Error guardando configuración:', error);
+        console.error('Error en configuración GitHub:', error);
         
-        let mensajeError = `❌ Error en la configuración:\n\n${error.message}\n\n`;
+        let mensajeError = '❌ Error en la configuración:\n\n' + error.message;
         
-        if (error.message.includes('token') || error.message.includes('401') || error.message.includes('403')) {
-            mensajeError += 'Posibles causas:\n';
-            mensajeError += '1. Token expirado o inválido\n';
-            mensajeError += '2. Token sin permisos suficientes\n';
-            mensajeError += '3. Nombre de usuario incorrecto\n\n';
-            mensajeError += 'Solución: Genera un nuevo token en GitHub con permisos "repo".';
+        if (error.message.includes('401') || error.message.includes('403')) {
+            mensajeError += '\n\nPosibles causas:';
+            mensajeError += '\n• Token expirado o inválido';
+            mensajeError += '\n• Token sin permisos suficientes';
+            mensajeError += '\n• Nombre de usuario incorrecto';
+            mensajeError += '\n\nSolución: Genera un nuevo token en GitHub con permisos "repo".';
         }
         
         alert(mensajeError);
         
     } finally {
-        // Restaurar botón
-        document.getElementById('btn-save-github-config').innerHTML = '<i class="fas fa-save"></i> Guardar Configuración';
-        document.getElementById('btn-save-github-config').disabled = false;
+        btn.innerHTML = mensajeOriginal;
+        btn.disabled = false;
     }
 }
+
+// ============================================
+// INICIALIZACIÓN DE LA APLICACIÓN
+// ============================================
+
+document.addEventListener('DOMContentLoaded', async function() {
+    loadGitHubConfig();
+    
+    const tieneSesion = initSession();
+    
+    if (!tieneSesion) {
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
+    }
+    
+    initializeAllCanvas();
+    
+    await loadAllData();
+    
+    cargarLideres();
+    actualizarFechas();
+    setupBasicEventListeners();
+    setupEventListeners();
+    
+    document.getElementById('user-role').addEventListener('change', function() {
+        const configSection = document.getElementById('github-config-section');
+        if (this.value === 'admin') {
+            configSection.classList.remove('hidden');
+        } else {
+            configSection.classList.add('hidden');
+        }
+    });
+    
+    document.addEventListener('click', resetSessionTimer);
+    document.addEventListener('keypress', resetSessionTimer);
+});
+
+// ============================================
+// FUNCIONES PARA CANVAS DE FIRMAS
+// ============================================
+
+function initializeAllCanvas() {
+    console.log('🔄 Inicializando canvas de firmas...');
+    
+    setTimeout(() => {
+        const canvasConfigs = [
+            {id: 'signature-canvas-colaborador', clearBtn: 'clear-colaborador'},
+            {id: 'signature-canvas-supervisor', clearBtn: 'clear-supervisor'},
+            {id: 'signature-canvas-sindical', clearBtn: 'clear-sindical'},
+            {id: 'signature-canvas-rh', clearBtn: 'clear-rh'},
+            {id: 'signature-canvas-verbal-colaborador', clearBtn: 'clear-verbal-colaborador'},
+            {id: 'signature-canvas-verbal-supervisor', clearBtn: 'clear-verbal-supervisor'}
+        ];
         
-        // ============================================
-        // FUNCIONES PRINCIPALES
-        // ============================================
+        canvasConfigs.forEach(config => {
+            const canvas = document.getElementById(config.id);
+            if (canvas && !canvas.dataset.initialized) {
+                initializeCanvas(config.id, config.clearBtn);
+                canvas.dataset.initialized = 'true';
+            }
+        });
+    }, 100);
+}
+
+function initializeCanvas(canvasId, clearBtnId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        console.warn(`Canvas no encontrado: ${canvasId}`);
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    
+    const updateCanvasSize = () => {
+        const parentWidth = canvas.parentElement.clientWidth;
+        canvas.width = parentWidth;
+        canvas.height = 150;
         
-        function showApp() {
-            document.getElementById('app').classList.remove('hidden');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+    };
+    
+    updateCanvasSize();
+    
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    
+    function startDrawing(e) {
+        isDrawing = true;
+        [lastX, lastY] = getCoordinates(e);
+    }
+    
+    function draw(e) {
+        if (!isDrawing) return;
+        
+        const [x, y] = getCoordinates(e);
+        
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        
+        [lastX, lastY] = [x, y];
+    }
+    
+    function stopDrawing() {
+        isDrawing = false;
+    }
+    
+    function getCoordinates(e) {
+        let x, y;
+        
+        if (e.type.includes('mouse')) {
+            x = e.offsetX;
+            y = e.offsetY;
+        } else if (e.type.includes('touch')) {
+            const rect = canvas.getBoundingClientRect();
+            x = e.touches[0].clientX - rect.left;
+            y = e.touches[0].clientY - rect.top;
         }
         
-        function setupEventListeners() {
-            // Navegación entre pestañas
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    showTab(tabId);
-                });
-            });
-            
-            // Eventos de formulario escrito
-            document.getElementById('formEscrita').addEventListener('submit', submitFormEscrita);
-            document.getElementById('reset-escrita').addEventListener('click', resetFormEscrita);
-            
-            // Mostrar/ocultar sección del colaborador
-            document.getElementById('num-empleado').addEventListener('input', function() {
-                const seccionColaborador = document.getElementById('seccion-colaborador');
-                if (this.value) {
-                    seccionColaborador.classList.remove('hidden');
-                } else {
-                    seccionColaborador.classList.add('hidden');
-                }
-            });
-            
-            // Mostrar campo "Otro" para área
-            document.getElementById('area').addEventListener('change', function() {
-                const areaOtroContainer = document.getElementById('area-otro-container');
-                if (this.value === 'Otro') {
-                    areaOtroContainer.classList.remove('hidden');
-                    document.getElementById('area-otro').required = true;
-                } else {
-                    areaOtroContainer.classList.add('hidden');
-                    document.getElementById('area-otro').required = false;
-                }
-            });
-            
-            // Mostrar campo "Otro" para líder
-            document.getElementById('lider').addEventListener('change', function() {
-                const liderOtroContainer = document.getElementById('lider-otro-container');
-                if (this.value === 'otro') {
-                    liderOtroContainer.classList.remove('hidden');
-                    document.getElementById('lider-otro-nombre').required = true;
-                    document.getElementById('lider-otro-puesto').required = true;
-                    document.getElementById('lider-otro-area').required = true;
-                } else {
-                    liderOtroContainer.classList.add('hidden');
-                    document.getElementById('lider-otro-nombre').required = false;
-                    document.getElementById('lider-otro-puesto').required = false;
-                    document.getElementById('lider-otro-area').required = false;
-                }
-            });
-            
-            document.getElementById('lider-verbal').addEventListener('change', function() {
-                const liderVerbalOtroContainer = document.getElementById('lider-verbal-otro-container');
-                if (this.value === 'otro') {
-                    liderVerbalOtroContainer.classList.remove('hidden');
-                    document.getElementById('lider-verbal-otro-nombre').required = true;
-                    document.getElementById('lider-verbal-otro-puesto').required = true;
-                    document.getElementById('lider-verbal-otro-area').required = true;
-                } else {
-                    liderVerbalOtroContainer.classList.add('hidden');
-                    document.getElementById('lider-verbal-otro-nombre').required = false;
-                    document.getElementById('lider-verbal-otro-puesto').required = false;
-                    document.getElementById('lider-verbal-otro-area').required = false;
-                }
-            });
-            
-            // Eventos de formulario verbal
-            document.getElementById('formVerbal').addEventListener('submit', submitFormVerbal);
-            document.getElementById('reset-verbal').addEventListener('click', resetFormVerbal);
-            
-            // Subir imagen
-            document.getElementById('image-upload-area').addEventListener('click', function() {
-                document.getElementById('image-upload').click();
-            });
-            
-            document.getElementById('image-upload').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('El archivo es demasiado grande. Máximo 5MB.');
-                        return;
-                    }
-                    
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const preview = document.getElementById('image-preview');
-                        preview.src = e.target.result;
-                        preview.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // Eventos del panel admin
-            document.getElementById('export-pdf').addEventListener('click', openExportModal);
-            document.getElementById('export-excel').addEventListener('click', exportExcel);
-            document.getElementById('refresh-data').addEventListener('click', actualizarDashboard);
-            document.getElementById('filter-apply').addEventListener('click', aplicarFiltro);
-            document.getElementById('filter-clear').addEventListener('click', limpiarFiltro);
-            
-            // Eventos del modal de edición
-            document.getElementById('close-export-modal').addEventListener('click', closeExportModal);
-            document.getElementById('cancel-export').addEventListener('click', closeExportModal);
-            document.getElementById('generate-pdf').addEventListener('click', generatePDFWithOptions);
-            document.getElementById('close-edit-modal').addEventListener('click', closeEditModal);
-            document.getElementById('cancel-edit').addEventListener('click', closeEditModal);
-            document.getElementById('edit-form').addEventListener('submit', saveEdit);
-            
-            // Radio buttons para opciones de exportacion
-            document.querySelectorAll('input[name="export-option"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const selectionContainer = document.getElementById('feedback-selection-container');
-                    if (this.value === 'selected') {
-                        selectionContainer.classList.remove('hidden');
-                    } else {
-                        selectionContainer.classList.add('hidden');
-                    }
-                });
-            });
-            
-            // Botones para seleccionar/deseleccionar todos
-            document.getElementById('select-all-btn').addEventListener('click', function() {
-                document.querySelectorAll('.feedback-checkbox').forEach(checkbox => {
-                    checkbox.checked = true;
-                });
-            });
-            
-            document.getElementById('deselect-all-btn').addEventListener('click', function() {
-                document.querySelectorAll('.feedback-checkbox').forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-            });
+        return [x, y];
+    }
+    
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startDrawing(e);
+    });
+    
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        draw(e);
+    });
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        stopDrawing();
+    });
+    
+    const clearBtn = document.getElementById(clearBtnId);
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        });
+    }
+    
+    window.addEventListener('resize', updateCanvasSize);
+}
+
+function limpiarTodosLosCanvas() {
+    const canvasIds = [
+        'signature-canvas-colaborador',
+        'signature-canvas-supervisor',
+        'signature-canvas-sindical',
+        'signature-canvas-rh',
+        'signature-canvas-verbal-colaborador',
+        'signature-canvas-verbal-supervisor'
+    ];
+    
+    canvasIds.forEach(canvasId => {
+        const canvas = document.getElementById(canvasId);
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
         }
-        
-        function cargarLideres() {
-            const selectEscrito = document.getElementById('lider');
-            const selectVerbal = document.getElementById('lider-verbal');
-            
-            selectEscrito.innerHTML = '<option value="">Seleccionar líder</option>';
-            selectVerbal.innerHTML = '<option value="">Seleccionar líder</option>';
-            
-            lideres.forEach(lider => {
-                const option1 = document.createElement('option');
-                option1.value = lider.id;
-                option1.textContent = `${lider.nombre} - ${lider.rol} (${lider.area})`;
-                selectEscrito.appendChild(option1);
-                
-                const option2 = document.createElement('option');
-                option2.value = lider.id;
-                option2.textContent = `${lider.nombre} - ${lider.rol} (${lider.area})`;
-                selectVerbal.appendChild(option2);
-            });
-            
-            // Agregar opción "Otro"
-            const otroOption1 = document.createElement('option');
-            otroOption1.value = 'otro';
-            otroOption1.textContent = 'Otro (especificar en los campos siguientes)';
-            selectEscrito.appendChild(otroOption1);
-            
-            const otroOption2 = document.createElement('option');
-            otroOption2.value = 'otro';
-            otroOption2.textContent = 'Otro (especificar en los campos siguientes)';
-            selectVerbal.appendChild(otroOption2);
+    });
+}
+
+// ============================================
+// AUTENTICACIÓN Y CONFIGURACIÓN
+// ============================================
+
+function setupBasicEventListeners() {
+    document.getElementById('btn-login').addEventListener('click', handleLogin);
+    document.getElementById('user-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('btn-login').click();
         }
+    });
+}
+
+async function handleLogin() {
+    const role = document.getElementById('user-role').value;
+    const password = document.getElementById('user-password').value;
+    const errorMsg = document.getElementById('login-error');
+    
+    if (!role || !password) {
+        errorMsg.querySelector('span').textContent = 'Por favor complete todos los campos';
+        errorMsg.classList.remove('hidden');
+        return;
+    }
+    
+    if (USERS[role] && USERS[role].password === password) {
+        currentUser = role;
         
-        function generarFolio(tipo) {
-            const año = "2526";
-            
-            if (tipo === 'escrita') {
-                const numero = String(nextFolioEscrita).padStart(6, '0');
-                return `ESC-${año}-${numero}`;
-            } else {
-                const numero = String(nextFolioVerbal).padStart(6, '0');
-                return `VER-${año}-${numero}`;
-            }
+        localStorage.setItem('session_user', role);
+        localStorage.setItem('session_time', Date.now());
+        localStorage.setItem('currentUser', role);
+        
+        document.getElementById('login-screen').classList.add('hidden');
+        showApp();
+        
+        setupUserInterface();
+        
+        resetSessionTimer();
+        
+    } else {
+        errorMsg.querySelector('span').textContent = 'Credenciales incorrectas. Intente nuevamente.';
+        errorMsg.classList.remove('hidden');
+        document.getElementById('user-password').value = '';
+        document.getElementById('user-password').focus();
+    }
+}
+
+function setupUserInterface() {
+    document.getElementById('user-role-display').textContent = USERS[currentUser].name;
+    
+    document.getElementById('btn-logout').addEventListener('click', handleLogout);
+    
+    if (currentUser === 'admin') {
+        const configBtn = document.getElementById('btn-config-github');
+        configBtn.addEventListener('click', () => {
+            document.getElementById('github-config-section').classList.remove('hidden');
+        });
+        
+        if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
+            configBtn.classList.remove('hidden');
         }
-        
-        function actualizarFechas() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('fecha-escrita').value = today;
-            document.getElementById('fecha-verbal').value = today;
-            document.getElementById('filter-date').value = today;
-            
-            // Generar folios
-            document.getElementById('folio-escrita').value = generarFolio('escrita');
-            document.getElementById('folio-verbal').value = generarFolio('verbal');
+    }
+    
+    if (currentUser === 'admin') {
+        document.querySelectorAll('.supervisor-only').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+        showTab('admin');
+        actualizarDashboard();
+    } else {
+        document.querySelectorAll('.supervisor-only').forEach(el => el.classList.remove('hidden'));
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+        showTab('form-escrita');
+    }
+}
+
+// ============================================
+// FUNCIONES PRINCIPALES
+// ============================================
+
+function showApp() {
+    document.getElementById('app').classList.remove('hidden');
+}
+
+function setupEventListeners() {
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
+            showTab(tabId);
+        });
+    });
+    
+    document.getElementById('formEscrita').addEventListener('submit', submitFormEscrita);
+    document.getElementById('reset-escrita').addEventListener('click', resetFormEscrita);
+    
+    document.getElementById('num-empleado').addEventListener('input', function() {
+        const seccionColaborador = document.getElementById('seccion-colaborador');
+        if (this.value) {
+            seccionColaborador.classList.remove('hidden');
+        } else {
+            seccionColaborador.classList.add('hidden');
         }
-        
-        // ============================================
-        // GESTIÓN DE PESTAÑAS
-        // ============================================
-        
-        function showTab(tabId) {
-            // Actualizar pestañas activas
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            const activeTab = document.querySelector(`.nav-tab[data-tab="${tabId}"]`);
-            if (activeTab) {
-                activeTab.classList.add('active');
-            }
-            
-            // Mostrar contenido correspondiente
-            document.querySelectorAll('.content').forEach(content => {
-                content.classList.add('hidden');
-            });
-            
-            document.getElementById(tabId).classList.remove('hidden');
-            
-            // Re-inicializar canvas cuando se cambia de pestaña
-            setTimeout(() => {
-                initializeAllCanvas();
-            }, 100);
-        }
-        
-        // ============================================
-        // MANEJO DE FORMULARIOS
-        // ============================================
-        
-        async function submitFormEscrita(e) {
-            e.preventDefault();
-            
-            // Validar campos
-            const areaSelect = document.getElementById('area').value;
-            let area = areaSelect;
-            
-            if (areaSelect === 'Otro') {
-                area = document.getElementById('area-otro').value;
-                if (!area) {
-                    alert('Por favor especifique el área cuando selecciona "Otro"');
-                    return;
-                }
-            }
-            
-            const liderSelect = document.getElementById('lider').value;
-            let liderNombre = '';
-            let liderInfo = {};
-            
-            if (liderSelect === 'otro') {
-                const nombre = document.getElementById('lider-otro-nombre').value;
-                const puesto = document.getElementById('lider-otro-puesto').value;
-                const areaLider = document.getElementById('lider-otro-area').value;
-                
-                if (!nombre || !puesto || !areaLider) {
-                    alert('Por favor complete todos los campos del líder cuando selecciona "Otro"');
-                    return;
-                }
-                
-                liderNombre = `${nombre} - ${puesto} (${areaLider})`;
-                liderInfo = {
-                    id: 'otro',
-                    nombre: nombre,
-                    puesto: puesto,
-                    area: areaLider
-                };
-            } else {
-                const liderSeleccionado = lideres.find(l => l.id === liderSelect);
-                if (liderSeleccionado) {
-                    liderNombre = `${liderSeleccionado.nombre} - ${liderSeleccionado.rol} (${liderSeleccionado.area})`;
-                    liderInfo = liderSeleccionado;
-                }
-            }
-            
-            const cuadrilla = document.getElementById('cuadrilla-colaborador').value;
-            const numEmpleado = document.getElementById('num-empleado').value;
-            const descripcionImpacto = document.getElementById('descripcion-impacto').value;
-            const compromiso = document.getElementById('compromiso').value;
-            
-            // Validar checkboxes de impacto
-            const checkboxesImpacto = document.querySelectorAll('input[name="impacto"]:checked');
-            if (checkboxesImpacto.length === 0) {
-                alert('Por favor seleccione al menos un tipo de impacto');
-                return;
-            }
-            
-            // Obtener datos de la sección del colaborador (si existe)
-            let causas = [];
-            let explicacionCausa = '';
-            let accionDiferente = '';
-            
-            const seccionColaborador = document.getElementById('seccion-colaborador');
-            if (!seccionColaborador.classList.contains('hidden')) {
-                // Validar checkboxes de causa del colaborador
-                const checkboxesCausa = document.querySelectorAll('input[name="causa-problema"]:checked');
-                if (checkboxesCausa.length === 0) {
-                    alert('Por favor seleccione al menos una causa del problema en la sección del colaborador');
-                    return;
-                }
-                
-                causas = Array.from(checkboxesCausa).map(cb => cb.value);
-                explicacionCausa = document.getElementById('explicacion-causa-colaborador').value;
-                accionDiferente = document.getElementById('accion-diferente').value;
-            }
-            
-            if (!area || !liderSelect || !cuadrilla || !numEmpleado || !descripcionImpacto || !compromiso) {
-                alert('Por favor complete todos los campos requeridos (*)');
-                return;
-            }
-            
-            // CAPTURAR FIRMAS
-            const firmas = capturarFirmas('escrita');
-            
-            // Obtener tipos de impacto seleccionados
-            const impactos = Array.from(checkboxesImpacto).map(cb => cb.value);
-            
-            // Obtener datos del formulario
-            const feedback = {
-                id: Date.now(),
-                folio: document.getElementById('folio-escrita').value,
-                fecha: document.getElementById('fecha-escrita').value,
-                tipo: 'Escrita',
-                subtipo: document.querySelector('input[name="tipo-feedback-escrita"]:checked').value,
-                area,
-                liderId: liderSelect,
-                liderNombre: liderNombre,
-                liderInfo: liderInfo,
-                cuadrillaColaborador: cuadrilla,
-                numEmpleado,
-                impactos: impactos,
-                descripcionImpacto,
-                causas: causas,
-                explicacionCausa: explicacionCausa,
-                accionDiferente: accionDiferente,
-                compromiso,
-                firmas: firmas,
-                timestamp: new Date().toISOString()
-            };
-            
-            // Guardar en almacenamiento
-            feedbacks.push(feedback);
-            nextFolioEscrita++;
-            
-            // Guardar en GitHub o localStorage
-            const saved = await saveAllData();
-            
-            if (saved) {
-                // Mostrar mensaje de éxito
-                const successMsg = document.getElementById('escrita-success');
-                successMsg.classList.remove('hidden');
-                
-                // Ocultar mensaje después de 5 segundos
-                setTimeout(() => {
-                    successMsg.classList.add('hidden');
-                }, 5000);
-                
-                // Resetear formulario
-                resetFormEscrita();
-                
-                // Si es admin, actualizar dashboard
-                if (currentUser === 'admin') {
-                    actualizarDashboard();
-                }
-            } else {
-                alert('Error al guardar los datos. Intente nuevamente.');
-            }
-        }
-        
-        async function submitFormVerbal(e) {
-            e.preventDefault();
-            
-            // Validar campo de líder
-            const liderSelect = document.getElementById('lider-verbal').value;
-            let liderNombre = '';
-            let liderInfo = {};
-            
-            if (liderSelect === 'otro') {
-                const nombre = document.getElementById('lider-verbal-otro-nombre').value;
-                const puesto = document.getElementById('lider-verbal-otro-puesto').value;
-                const areaLider = document.getElementById('lider-verbal-otro-area').value;
-                
-                if (!nombre || !puesto || !areaLider) {
-                    alert('Por favor complete todos los campos del líder cuando selecciona "Otro"');
-                    return;
-                }
-                
-                liderNombre = `${nombre} - ${puesto} (${areaLider})`;
-                liderInfo = {
-                    id: 'otro',
-                    nombre: nombre,
-                    puesto: puesto,
-                    area: areaLider
-                };
-            } else {
-                const liderSeleccionado = lideres.find(l => l.id === liderSelect);
-                if (liderSeleccionado) {
-                    liderNombre = `${liderSeleccionado.nombre} - ${liderSeleccionado.rol} (${liderSeleccionado.area})`;
-                    liderInfo = liderSeleccionado;
-                }
-            }
-            
-            const cuadrilla = document.getElementById('cuadrilla-verbal-colaborador').value;
-            const numEmpleado = document.getElementById('num-empleado-verbal').value;
-            const razon = document.getElementById('razon-verbal').value;
-            
-            if (!liderSelect || !cuadrilla || !numEmpleado || !razon) {
-                alert('Por favor complete todos los campos requeridos (*)');
-                return;
-            }
-            
-            // Obtener imagen si existe
-            let imagenBase64 = null;
-            const preview = document.getElementById('image-preview');
-            if (preview.style.display === 'block') {
-                imagenBase64 = preview.src;
-            }
-            
-            // CAPTURAR FIRMAS
-            const firmas = capturarFirmas('verbal');
-            
-            // Obtener datos del formulario
-            const feedback = {
-                id: Date.now(),
-                folio: document.getElementById('folio-verbal').value,
-                fecha: document.getElementById('fecha-verbal').value,
-                tipo: 'Verbal',
-                liderId: liderSelect,
-                liderNombre: liderNombre,
-                liderInfo: liderInfo,
-                cuadrillaColaborador: cuadrilla,
-                numEmpleado,
-                razon,
-                imagen: imagenBase64,
-                firmas: firmas,
-                timestamp: new Date().toISOString()
-            };
-            
-            // Guardar en almacenamiento
-            feedbacks.push(feedback);
-            nextFolioVerbal++;
-            
-            // Guardar en GitHub o localStorage
-            const saved = await saveAllData();
-            
-            if (saved) {
-                // Mostrar mensaje de éxito
-                const successMsg = document.getElementById('verbal-success');
-                successMsg.classList.remove('hidden');
-                
-                // Ocultar mensaje después de 5 segundos
-                setTimeout(() => {
-                    successMsg.classList.add('hidden');
-                }, 5000);
-                
-                // Resetear formulario
-                resetFormVerbal();
-                
-                // Si es admin, actualizar dashboard
-                if (currentUser === 'admin') {
-                    actualizarDashboard();
-                }
-            } else {
-                alert('Error al guardar los datos. Intente nuevamente.');
-            }
-        }
-        
-        function resetFormEscrita() {
-            document.getElementById('formEscrita').reset();
-            document.getElementById('seccion-colaborador').classList.add('hidden');
-            document.getElementById('area-otro-container').classList.add('hidden');
+    });
+    
+    document.getElementById('area').addEventListener('change', function() {
+        const areaOtroContainer = document.getElementById('area-otro-container');
+        if (this.value === 'Otro') {
+            areaOtroContainer.classList.remove('hidden');
+            document.getElementById('area-otro').required = true;
+        } else {
+            areaOtroContainer.classList.add('hidden');
             document.getElementById('area-otro').required = false;
-            document.getElementById('lider-otro-container').classList.add('hidden');
+        }
+    });
+    
+    document.getElementById('lider').addEventListener('change', function() {
+        const liderOtroContainer = document.getElementById('lider-otro-container');
+        if (this.value === 'otro') {
+            liderOtroContainer.classList.remove('hidden');
+            document.getElementById('lider-otro-nombre').required = true;
+            document.getElementById('lider-otro-puesto').required = true;
+            document.getElementById('lider-otro-area').required = true;
+        } else {
+            liderOtroContainer.classList.add('hidden');
             document.getElementById('lider-otro-nombre').required = false;
             document.getElementById('lider-otro-puesto').required = false;
             document.getElementById('lider-otro-area').required = false;
-            
-            actualizarFechas();
-            
-            // Limpiar canvas
-            const canvases = ['signature-canvas-colaborador', 'signature-canvas-supervisor', 
-                            'signature-canvas-sindical', 'signature-canvas-rh'];
-            canvases.forEach(canvasId => {
-                const canvas = document.getElementById(canvasId);
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.strokeStyle = '#333333';
-                }
-            });
         }
-        
-        function resetFormVerbal() {
-            document.getElementById('formVerbal').reset();
-            document.getElementById('image-preview').style.display = 'none';
-            document.getElementById('lider-verbal-otro-container').classList.add('hidden');
+    });
+    
+    document.getElementById('lider-verbal').addEventListener('change', function() {
+        const liderVerbalOtroContainer = document.getElementById('lider-verbal-otro-container');
+        if (this.value === 'otro') {
+            liderVerbalOtroContainer.classList.remove('hidden');
+            document.getElementById('lider-verbal-otro-nombre').required = true;
+            document.getElementById('lider-verbal-otro-puesto').required = true;
+            document.getElementById('lider-verbal-otro-area').required = true;
+        } else {
+            liderVerbalOtroContainer.classList.add('hidden');
             document.getElementById('lider-verbal-otro-nombre').required = false;
             document.getElementById('lider-verbal-otro-puesto').required = false;
             document.getElementById('lider-verbal-otro-area').required = false;
-            
-            actualizarFechas();
-            
-            // Limpiar canvas
-            const canvases = ['signature-canvas-verbal-colaborador', 'signature-canvas-verbal-supervisor'];
-            canvases.forEach(canvasId => {
-                const canvas = document.getElementById(canvasId);
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.strokeStyle = '#333333';
-                }
-            });
         }
-        
-        // ============================================
-        // PANEL DE ADMINISTRADOR
-        // ============================================
-        
-        function actualizarDashboard() {
-            const total = feedbacks.length;
-            const escritas = feedbacks.filter(f => f.tipo === 'Escrita').length;
-            const verbales = feedbacks.filter(f => f.tipo === 'Verbal').length;
-            
-            // Contar colaboradores únicos
-            const colaboradoresUnicos = new Set(
-                feedbacks.filter(f => f.numEmpleado).map(f => f.numEmpleado)
-            ).size;
-            
-            // Actualizar estadísticas
-            document.getElementById('total-feedbacks').textContent = total;
-            document.getElementById('escritas-count').textContent = escritas;
-            document.getElementById('verbales-count').textContent = verbales;
-            document.getElementById('colaboradores-count').textContent = colaboradoresUnicos;
-            
-            // Actualizar tabla
-            actualizarTablaFeedbacks();
-        }
-        
-        function actualizarTablaFeedbacks(filtroFecha = null) {
-            const tbody = document.getElementById('feedbacks-tbody');
-            const noDataMsg = document.getElementById('no-data-message');
-            
-            tbody.innerHTML = '';
-            
-            let feedbacksFiltrados = feedbacks;
-            
-            if (filtroFecha) {
-                feedbacksFiltrados = feedbacks.filter(f => f.fecha === filtroFecha);
-            }
-            
-            if (feedbacksFiltrados.length === 0) {
-                noDataMsg.style.display = 'block';
-                tbody.style.display = 'none';
+    });
+    
+    document.getElementById('formVerbal').addEventListener('submit', submitFormVerbal);
+    document.getElementById('reset-verbal').addEventListener('click', resetFormVerbal);
+    
+    document.getElementById('image-upload-area').addEventListener('click', function() {
+        document.getElementById('image-upload').click();
+    });
+    
+    document.getElementById('image-upload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 5MB.');
                 return;
             }
             
-            noDataMsg.style.display = 'none';
-            tbody.style.display = '';
-            
-            // Ordenar por fecha más reciente
-            feedbacksFiltrados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            feedbacksFiltrados.forEach(feedback => {
-                const row = document.createElement('tr');
-                
-                // Folio
-                const tdFolio = document.createElement('td');
-                tdFolio.textContent = feedback.folio;
-                row.appendChild(tdFolio);
-                
-                // Fecha
-                const tdFecha = document.createElement('td');
-                tdFecha.textContent = feedback.fecha;
-                row.appendChild(tdFecha);
-                
-                // Tipo
-                const tdTipo = document.createElement('td');
-                if (feedback.tipo === 'Escrita') {
-                    tdTipo.innerHTML = `<span class="badge badge-escrita">${feedback.tipo} (${feedback.subtipo})</span>`;
-                } else {
-                    tdTipo.innerHTML = `<span class="badge badge-verbal">${feedback.tipo}</span>`;
-                }
-                row.appendChild(tdTipo);
-                
-                // Número de empleado
-                const tdEmpleado = document.createElement('td');
-                tdEmpleado.textContent = feedback.numEmpleado || 'N/A';
-                row.appendChild(tdEmpleado);
-                
-                // Supervisor
-                const tdSupervisor = document.createElement('td');
-                tdSupervisor.textContent = feedback.liderNombre ? 
-                    feedback.liderNombre.split(' - ')[0] : 
-                    'N/A';
-                row.appendChild(tdSupervisor);
-                
-                // Área
-                const tdArea = document.createElement('td');
-                tdArea.textContent = feedback.area || 'N/A';
-                row.appendChild(tdArea);
-                
-                // Cuadrilla
-                const tdCuadrilla = document.createElement('td');
-                tdCuadrilla.textContent = feedback.cuadrillaColaborador || 'N/A';
-                row.appendChild(tdCuadrilla);
-                
-                // Impacto
-                const tdImpacto = document.createElement('td');
-                if (feedback.impactos) {
-                    tdImpacto.textContent = feedback.impactos.join(', ');
-                } else {
-                    tdImpacto.textContent = feedback.razon ? 'Verbal' : 'N/A';
-                }
-                row.appendChild(tdImpacto);
-                
-                // Causas (solo para retroalimentación escrita)
-                const tdCausas = document.createElement('td');
-                if (feedback.causas && feedback.causas.length > 0) {
-                    tdCausas.textContent = feedback.causas.join(', ');
-                } else {
-                    tdCausas.textContent = 'N/A';
-                }
-                row.appendChild(tdCausas);
-                
-                // Acciones
-                const tdAcciones = document.createElement('td');
-                
-                const btnVer = document.createElement('button');
-                btnVer.className = 'btn btn-outline';
-                btnVer.style.cssText = 'padding: 5px 10px; font-size: 14px;';
-                btnVer.innerHTML = '<i class="fas fa-eye"></i>';
-                btnVer.title = 'Ver detalles';
-                btnVer.addEventListener('click', () => verFeedback(feedback.id));
-                
-                const btnEditar = document.createElement('button');
-                btnEditar.className = 'btn btn-outline';
-                btnEditar.style.cssText = 'padding: 5px 10px; font-size: 14px; margin-left: 5px;';
-                btnEditar.innerHTML = '<i class="fas fa-edit"></i>';
-                btnEditar.title = 'Editar';
-                btnEditar.addEventListener('click', () => abrirModalEdicion(feedback.id));
-                
-                const btnEliminar = document.createElement('button');
-                btnEliminar.className = 'btn btn-outline';
-                btnEliminar.style.cssText = 'padding: 5px 10px; font-size: 14px; margin-left: 5px;';
-                btnEliminar.innerHTML = '<i class="fas fa-trash"></i>';
-                btnEliminar.title = 'Eliminar';
-                btnEliminar.addEventListener('click', () => eliminarFeedback(feedback.id));
-                
-                tdAcciones.appendChild(btnVer);
-                tdAcciones.appendChild(btnEditar);
-                tdAcciones.appendChild(btnEliminar);
-                row.appendChild(tdAcciones);
-                
-                tbody.appendChild(row);
-            });
-        }
-        
-        function verFeedback(id) {
-            const feedback = feedbacks.find(f => f.id === id);
-            if (!feedback) return;
-            
-            let detalles = `=== DETALLES DE RETROALIMENTACIÓN ===\n\n`;
-            detalles += `Folio: ${feedback.folio}\n`;
-            detalles += `Fecha: ${feedback.fecha}\n`;
-            detalles += `Tipo: ${feedback.tipo}\n`;
-            
-            if (feedback.tipo === 'Escrita') {
-                detalles += `Subtipo: ${feedback.subtipo}\n`;
-                detalles += `Área: ${feedback.area}\n`;
-                detalles += `Supervisor: ${feedback.liderNombre}\n`;
-                detalles += `N° Empleado: ${feedback.numEmpleado}\n`;
-                detalles += `Cuadrilla: ${feedback.cuadrillaColaborador}\n`;
-                detalles += `\nImpactos identificados:\n`;
-                detalles += feedback.impactos ? `- ${feedback.impactos.join('\n- ')}\n` : 'N/A\n';
-                detalles += `\nDescripción del impacto:\n${feedback.descripcionImpacto}\n`;
-                
-                if (feedback.causas && feedback.causas.length > 0) {
-                    detalles += `\nCausas identificadas por el colaborador:\n`;
-                    detalles += `- ${feedback.causas.join('\n- ')}\n`;
-                    
-                    if (feedback.explicacionCausa) {
-                        detalles += `\nExplicación adicional del colaborador:\n${feedback.explicacionCausa}\n`;
-                    }
-                }
-                
-                if (feedback.accionDiferente) {
-                    detalles += `\nAcción diferente sugerida por el colaborador:\n${feedback.accionDiferente}\n`;
-                }
-                
-                detalles += `\nCompromiso del colaborador:\n${feedback.compromiso}\n`;
-            } else {
-                detalles += `\nSupervisor: ${feedback.liderNombre}\n`;
-                detalles += `N° Empleado: ${feedback.numEmpleado}\n`;
-                detalles += `Cuadrilla: ${feedback.cuadrillaColaborador}\n`;
-                detalles += `\nRazón:\n${feedback.razon}\n`;
-                if (feedback.imagen) {
-                    detalles += `\n(Incluye imagen adjunta)\n`;
-                }
-            }
-            
-            detalles += `\nRegistrado el: ${new Date(feedback.timestamp).toLocaleString()}`;
-            
-            alert(detalles);
-        }
-        
-        function abrirModalEdicion(id) {
-            const feedback = feedbacks.find(f => f.id === id);
-            if (!feedback) return;
-            
-            // Llenar formulario de edición
-            document.getElementById('edit-id').value = feedback.id;
-            document.getElementById('edit-folio').value = feedback.folio;
-            document.getElementById('edit-fecha').value = feedback.fecha;
-            document.getElementById('edit-tipo').value = feedback.tipo;
-            document.getElementById('edit-area').value = feedback.area || '';
-            document.getElementById('edit-num-empleado').value = feedback.numEmpleado || '';
-            document.getElementById('edit-cuadrilla').value = feedback.cuadrillaColaborador || '';
-            
-            if (feedback.impactos) {
-                document.getElementById('edit-impacto').value = feedback.impactos.join(', ');
-            } else {
-                document.getElementById('edit-impacto').value = '';
-            }
-            
-            if (feedback.causas) {
-                document.getElementById('edit-causas').value = feedback.causas.join(', ');
-            } else {
-                document.getElementById('edit-causas').value = '';
-            }
-            
-            document.getElementById('edit-descripcion').value = 
-                feedback.descripcionImpacto || feedback.razon || '';
-            document.getElementById('edit-compromiso').value = feedback.compromiso || '';
-            
-            // Mostrar modal
-            document.getElementById('edit-modal').style.display = 'block';
-        }
-        
-        function closeEditModal() {
-            document.getElementById('edit-modal').style.display = 'none';
-            document.getElementById('edit-form').reset();
-        }
-        
-        async function saveEdit(e) {
-            e.preventDefault();
-            
-            const id = parseInt(document.getElementById('edit-id').value);
-            const index = feedbacks.findIndex(f => f.id === id);
-            
-            if (index === -1) return;
-            
-            // Actualizar feedback
-            feedbacks[index] = {
-                ...feedbacks[index],
-                fecha: document.getElementById('edit-fecha').value,
-                area: document.getElementById('edit-area').value,
-                numEmpleado: document.getElementById('edit-num-empleado').value,
-                cuadrillaColaborador: document.getElementById('edit-cuadrilla').value,
-                descripcionImpacto: document.getElementById('edit-descripcion').value || feedbacks[index].descripcionImpacto,
-                compromiso: document.getElementById('edit-compromiso').value || feedbacks[index].compromiso
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('image-preview');
+                preview.src = e.target.result;
+                preview.style.display = 'block';
             };
-            
-            // Guardar cambios
-            const saved = await saveAllData();
-            
-            if (saved) {
-                // Actualizar tabla
-                actualizarTablaFeedbacks();
-                
-                // Cerrar modal
-                closeEditModal();
-                
-                alert('Cambios guardados exitosamente');
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    document.getElementById('export-pdf').addEventListener('click', openExportModal);
+    document.getElementById('export-excel').addEventListener('click', exportExcel);
+    document.getElementById('refresh-data').addEventListener('click', actualizarDashboard);
+    document.getElementById('filter-apply').addEventListener('click', aplicarFiltro);
+    document.getElementById('filter-clear').addEventListener('click', limpiarFiltro);
+    
+    document.getElementById('close-export-modal').addEventListener('click', closeExportModal);
+    document.getElementById('cancel-export').addEventListener('click', closeExportModal);
+    document.getElementById('generate-pdf').addEventListener('click', generatePDFWithOptions);
+    document.getElementById('close-edit-modal').addEventListener('click', closeEditModal);
+    document.getElementById('cancel-edit').addEventListener('click', closeEditModal);
+    document.getElementById('edit-form').addEventListener('submit', saveEdit);
+    
+    document.querySelectorAll('input[name="export-option"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const selectionContainer = document.getElementById('feedback-selection-container');
+            if (this.value === 'selected') {
+                selectionContainer.classList.remove('hidden');
             } else {
-                alert('Error al guardar los cambios');
+                selectionContainer.classList.add('hidden');
             }
-        }
-        
-        async function eliminarFeedback(id) {
-            if (!confirm('¿Está seguro que desea eliminar esta retroalimentación?')) {
-                return;
-            }
-            
-            feedbacks = feedbacks.filter(f => f.id !== id);
-            const saved = await saveAllData();
-            
-            if (saved) {
-                actualizarDashboard();
-                alert('Retroalimentación eliminada exitosamente');
-            } else {
-                alert('Error al eliminar la retroalimentación');
-            }
-        }
-        
-        function aplicarFiltro() {
-            const fecha = document.getElementById('filter-date').value;
-            if (!fecha) {
-                alert('Por favor seleccione una fecha');
-                return;
-            }
-            
-            actualizarTablaFeedbacks(fecha);
-        }
-        
-        function limpiarFiltro() {
-            document.getElementById('filter-date').value = new Date().toISOString().split('T')[0];
-            actualizarTablaFeedbacks();
-        }
-        
-        // ============================================
-        // EXPORTACIÓN DE DATOS
-        // ============================================
+        });
+    });
+    
+    document.getElementById('select-all-btn').addEventListener('click', function() {
+        document.querySelectorAll('.feedback-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    });
+    
+    document.getElementById('deselect-all-btn').addEventListener('click', function() {
+        document.querySelectorAll('.feedback-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    });
+}
 
-        function exportExcel() {
-            if (feedbacks.length === 0) {
-                alert('No hay datos para exportar');
-                return;
+function cargarLideres() {
+    const selectEscrito = document.getElementById('lider');
+    const selectVerbal = document.getElementById('lider-verbal');
+    
+    selectEscrito.innerHTML = '<option value="">Seleccionar líder</option>';
+    selectVerbal.innerHTML = '<option value="">Seleccionar líder</option>';
+    
+    lideres.forEach(lider => {
+        const option1 = document.createElement('option');
+        option1.value = lider.id;
+        option1.textContent = `${lider.nombre} - ${lider.rol} (${lider.area})`;
+        selectEscrito.appendChild(option1);
+        
+        const option2 = document.createElement('option');
+        option2.value = lider.id;
+        option2.textContent = `${lider.nombre} - ${lider.rol} (${lider.area})`;
+        selectVerbal.appendChild(option2);
+    });
+    
+    const otroOption1 = document.createElement('option');
+    otroOption1.value = 'otro';
+    otroOption1.textContent = 'Otro (especificar en los campos siguientes)';
+    selectEscrito.appendChild(otroOption1);
+    
+    const otroOption2 = document.createElement('option');
+    otroOption2.value = 'otro';
+    otroOption2.textContent = 'Otro (especificar en los campos siguientes)';
+    selectVerbal.appendChild(otroOption2);
+}
+
+function generarFolio(tipo) {
+    const año = "2526";
+    
+    if (tipo === 'escrita') {
+        const numero = String(nextFolioEscrita).padStart(6, '0');
+        return `ESC-${año}-${numero}`;
+    } else {
+        const numero = String(nextFolioVerbal).padStart(6, '0');
+        return `VER-${año}-${numero}`;
+    }
+}
+
+function actualizarFechas() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha-escrita').value = today;
+    document.getElementById('fecha-verbal').value = today;
+    document.getElementById('filter-date').value = today;
+    
+    document.getElementById('folio-escrita').value = generarFolio('escrita');
+    document.getElementById('folio-verbal').value = generarFolio('verbal');
+}
+
+function showTab(tabId) {
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    const activeTab = document.querySelector(`.nav-tab[data-tab="${tabId}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+    
+    document.querySelectorAll('.content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    document.getElementById(tabId).classList.remove('hidden');
+    
+    setTimeout(() => {
+        initializeAllCanvas();
+    }, 150);
+}
+
+// ============================================
+// MANEJO DE FORMULARIOS
+// ============================================
+
+async function submitFormEscrita(e) {
+    e.preventDefault();
+    
+    const areaSelect = document.getElementById('area').value;
+    let area = areaSelect;
+    
+    if (areaSelect === 'Otro') {
+        area = document.getElementById('area-otro').value;
+        if (!area) {
+            alert('Por favor especifique el área cuando selecciona "Otro"');
+            return;
+        }
+    }
+    
+    const liderSelect = document.getElementById('lider').value;
+    let liderNombre = '';
+    let liderInfo = {};
+    
+    if (liderSelect === 'otro') {
+        const nombre = document.getElementById('lider-otro-nombre').value;
+        const puesto = document.getElementById('lider-otro-puesto').value;
+        const areaLider = document.getElementById('lider-otro-area').value;
+        
+        if (!nombre || !puesto || !areaLider) {
+            alert('Por favor complete todos los campos del líder cuando selecciona "Otro"');
+            return;
+        }
+        
+        liderNombre = `${nombre} - ${puesto} (${areaLider})`;
+        liderInfo = {
+            id: 'otro_' + Date.now(),
+            nombre: nombre,
+            rol: puesto,
+            area: areaLider,
+            esOtro: true
+        };
+    } else {
+        const liderSeleccionado = lideres.find(l => l.id === liderSelect);
+        if (liderSeleccionado) {
+            liderNombre = `${liderSeleccionado.nombre} - ${liderSeleccionado.rol} (${liderSeleccionado.area})`;
+            liderInfo = {
+                ...liderSeleccionado,
+                esOtro: false
+            };
+        } else {
+            alert('Por favor seleccione un líder válido');
+            return;
+        }
+    }
+    
+    const cuadrilla = document.getElementById('cuadrilla-colaborador').value;
+    const numEmpleado = document.getElementById('num-empleado').value;
+    const descripcionImpacto = document.getElementById('descripcion-impacto').value;
+    const compromiso = document.getElementById('compromiso').value;
+    
+    const checkboxesImpacto = document.querySelectorAll('input[name="impacto"]:checked');
+    if (checkboxesImpacto.length === 0) {
+        alert('Por favor seleccione al menos un tipo de impacto');
+        return;
+    }
+    
+    let causas = [];
+    let explicacionCausa = '';
+    let accionDiferente = '';
+    
+    const seccionColaborador = document.getElementById('seccion-colaborador');
+    if (!seccionColaborador.classList.contains('hidden')) {
+        const checkboxesCausa = document.querySelectorAll('input[name="causa-problema"]:checked');
+        if (checkboxesCausa.length === 0) {
+            alert('Por favor seleccione al menos una causa del problema en la sección del colaborador');
+            return;
+        }
+        
+        causas = Array.from(checkboxesCausa).map(cb => cb.value);
+        explicacionCausa = document.getElementById('explicacion-causa-colaborador').value;
+        accionDiferente = document.getElementById('accion-diferente').value;
+    }
+    
+    if (!area || !liderSelect || !cuadrilla || !numEmpleado || !descripcionImpacto || !compromiso) {
+        alert('Por favor complete todos los campos requeridos (*)');
+        return;
+    }
+    
+    const firmas = capturarFirmas('escrita');
+    
+    const impactos = Array.from(checkboxesImpacto).map(cb => cb.value);
+    
+    const feedback = {
+        id: Date.now(),
+        folio: document.getElementById('folio-escrita').value,
+        fecha: document.getElementById('fecha-escrita').value,
+        tipo: 'Escrita',
+        subtipo: document.querySelector('input[name="tipo-feedback-escrita"]:checked').value,
+        area,
+        liderId: liderSelect,
+        liderNombre: liderNombre,
+        liderInfo: liderInfo,
+        cuadrillaColaborador: cuadrilla,
+        numEmpleado,
+        impactos: impactos,
+        descripcionImpacto,
+        causas: causas,
+        explicacionCausa: explicacionCausa,
+        accionDiferente: accionDiferente,
+        compromiso,
+        firmas: firmas,
+        timestamp: new Date().toISOString()
+    };
+    
+    feedbacks.push(feedback);
+    nextFolioEscrita++;
+    
+    const saved = await saveAllData();
+    
+    if (saved) {
+        const successMsg = document.getElementById('escrita-success');
+        successMsg.classList.remove('hidden');
+        
+        setTimeout(() => {
+            successMsg.classList.add('hidden');
+        }, 5000);
+        
+        resetFormEscrita();
+        
+        if (currentUser === 'admin') {
+            actualizarDashboard();
+        }
+    } else {
+        alert('Error al guardar los datos. Intente nuevamente.');
+    }
+}
+
+async function submitFormVerbal(e) {
+    e.preventDefault();
+    
+    const liderSelect = document.getElementById('lider-verbal').value;
+    let liderNombre = '';
+    let liderInfo = {};
+    
+    if (liderSelect === 'otro') {
+        const nombre = document.getElementById('lider-verbal-otro-nombre').value;
+        const puesto = document.getElementById('lider-verbal-otro-puesto').value;
+        const areaLider = document.getElementById('lider-verbal-otro-area').value;
+        
+        if (!nombre || !puesto || !areaLider) {
+            alert('Por favor complete todos los campos del líder cuando selecciona "Otro"');
+            return;
+        }
+        
+        liderNombre = `${nombre} - ${puesto} (${areaLider})`;
+        liderInfo = {
+            id: 'otro_' + Date.now(),
+            nombre: nombre,
+            rol: puesto,
+            area: areaLider,
+            esOtro: true
+        };
+    } else {
+        const liderSeleccionado = lideres.find(l => l.id === liderSelect);
+        if (liderSeleccionado) {
+            liderNombre = `${liderSeleccionado.nombre} - ${liderSeleccionado.rol} (${liderSeleccionado.area})`;
+            liderInfo = {
+                ...liderSeleccionado,
+                esOtro: false
+            };
+        } else {
+            alert('Por favor seleccione un líder válido');
+            return;
+        }
+    }
+    
+    const cuadrilla = document.getElementById('cuadrilla-verbal-colaborador').value;
+    const numEmpleado = document.getElementById('num-empleado-verbal').value;
+    const razon = document.getElementById('razon-verbal').value;
+    
+    if (!liderSelect || !cuadrilla || !numEmpleado || !razon) {
+        alert('Por favor complete todos los campos requeridos (*)');
+        return;
+    }
+    
+    let imagenBase64 = null;
+    const preview = document.getElementById('image-preview');
+    if (preview.style.display === 'block') {
+        imagenBase64 = preview.src;
+    }
+    
+    const firmas = capturarFirmas('verbal');
+    
+    const feedback = {
+        id: Date.now(),
+        folio: document.getElementById('folio-verbal').value,
+        fecha: document.getElementById('fecha-verbal').value,
+        tipo: 'Verbal',
+        liderId: liderSelect,
+        liderNombre: liderNombre,
+        liderInfo: liderInfo,
+        cuadrillaColaborador: cuadrilla,
+        numEmpleado,
+        razon,
+        imagen: imagenBase64,
+        firmas: firmas,
+        timestamp: new Date().toISOString()
+    };
+    
+    feedbacks.push(feedback);
+    nextFolioVerbal++;
+    
+    const saved = await saveAllData();
+    
+    if (saved) {
+        const successMsg = document.getElementById('verbal-success');
+        successMsg.classList.remove('hidden');
+        
+        setTimeout(() => {
+            successMsg.classList.add('hidden');
+        }, 5000);
+        
+        resetFormVerbal();
+        
+        if (currentUser === 'admin') {
+            actualizarDashboard();
+        }
+    } else {
+        alert('Error al guardar los datos. Intente nuevamente.');
+    }
+}
+
+function resetFormEscrita() {
+    document.getElementById('formEscrita').reset();
+    document.getElementById('seccion-colaborador').classList.add('hidden');
+    document.getElementById('area-otro-container').classList.add('hidden');
+    document.getElementById('area-otro').required = false;
+    document.getElementById('lider-otro-container').classList.add('hidden');
+    document.getElementById('lider-otro-nombre').required = false;
+    document.getElementById('lider-otro-puesto').required = false;
+    document.getElementById('lider-otro-area').required = false;
+    
+    actualizarFechas();
+    limpiarTodosLosCanvas();
+}
+
+function resetFormVerbal() {
+    document.getElementById('formVerbal').reset();
+    document.getElementById('image-preview').style.display = 'none';
+    document.getElementById('lider-verbal-otro-container').classList.add('hidden');
+    document.getElementById('lider-verbal-otro-nombre').required = false;
+    document.getElementById('lider-verbal-otro-puesto').required = false;
+    document.getElementById('lider-verbal-otro-area').required = false;
+    
+    actualizarFechas();
+    limpiarTodosLosCanvas();
+}
+
+// ============================================
+// PANEL DE ADMINISTRADOR
+// ============================================
+
+function actualizarDashboard() {
+    const total = feedbacks.length;
+    const escritas = feedbacks.filter(f => f.tipo === 'Escrita').length;
+    const verbales = feedbacks.filter(f => f.tipo === 'Verbal').length;
+    
+    const colaboradoresUnicos = new Set(
+        feedbacks.filter(f => f.numEmpleado).map(f => f.numEmpleado)
+    ).size;
+    
+    document.getElementById('total-feedbacks').textContent = total;
+    document.getElementById('escritas-count').textContent = escritas;
+    document.getElementById('verbales-count').textContent = verbales;
+    document.getElementById('colaboradores-count').textContent = colaboradoresUnicos;
+    
+    actualizarTablaFeedbacks();
+}
+
+function actualizarTablaFeedbacks(filtroFecha = null) {
+    const tbody = document.getElementById('feedbacks-tbody');
+    const noDataMsg = document.getElementById('no-data-message');
+    
+    tbody.innerHTML = '';
+    
+    let feedbacksFiltrados = feedbacks;
+    
+    if (filtroFecha) {
+        feedbacksFiltrados = feedbacks.filter(f => f.fecha === filtroFecha);
+    }
+    
+    if (feedbacksFiltrados.length === 0) {
+        noDataMsg.style.display = 'block';
+        tbody.style.display = 'none';
+        return;
+    }
+    
+    noDataMsg.style.display = 'none';
+    tbody.style.display = '';
+    
+    feedbacksFiltrados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    feedbacksFiltrados.forEach(feedback => {
+        const row = document.createElement('tr');
+        
+        const tdFolio = document.createElement('td');
+        tdFolio.textContent = feedback.folio;
+        row.appendChild(tdFolio);
+        
+        const tdFecha = document.createElement('td');
+        tdFecha.textContent = feedback.fecha;
+        row.appendChild(tdFecha);
+        
+        const tdTipo = document.createElement('td');
+        if (feedback.tipo === 'Escrita') {
+            tdTipo.innerHTML = `<span class="badge badge-escrita">${feedback.tipo} (${feedback.subtipo})</span>`;
+        } else {
+            tdTipo.innerHTML = `<span class="badge badge-verbal">${feedback.tipo}</span>`;
+        }
+        row.appendChild(tdTipo);
+        
+        const tdEmpleado = document.createElement('td');
+        tdEmpleado.textContent = feedback.numEmpleado || 'N/A';
+        row.appendChild(tdEmpleado);
+        
+        const tdSupervisor = document.createElement('td');
+        tdSupervisor.textContent = feedback.liderNombre ? 
+            feedback.liderNombre.split(' - ')[0] : 
+            'N/A';
+        row.appendChild(tdSupervisor);
+        
+        const tdArea = document.createElement('td');
+        tdArea.textContent = feedback.area || 'N/A';
+        row.appendChild(tdArea);
+        
+        const tdCuadrilla = document.createElement('td');
+        tdCuadrilla.textContent = feedback.cuadrillaColaborador || 'N/A';
+        row.appendChild(tdCuadrilla);
+        
+        const tdImpacto = document.createElement('td');
+        if (feedback.impactos) {
+            tdImpacto.textContent = feedback.impactos.join(', ');
+        } else {
+            tdImpacto.textContent = feedback.razon ? 'Verbal' : 'N/A';
+        }
+        row.appendChild(tdImpacto);
+        
+        const tdCausas = document.createElement('td');
+        if (feedback.causas && feedback.causas.length > 0) {
+            tdCausas.textContent = feedback.causas.join(', ');
+        } else {
+            tdCausas.textContent = 'N/A';
+        }
+        row.appendChild(tdCausas);
+        
+        const tdAcciones = document.createElement('td');
+        
+        const btnVer = document.createElement('button');
+        btnVer.className = 'btn btn-outline';
+        btnVer.style.cssText = 'padding: 5px 10px; font-size: 14px;';
+        btnVer.innerHTML = '<i class="fas fa-eye"></i>';
+        btnVer.title = 'Ver detalles';
+        btnVer.addEventListener('click', () => verFeedback(feedback.id));
+        
+        const btnEditar = document.createElement('button');
+        btnEditar.className = 'btn btn-outline';
+        btnEditar.style.cssText = 'padding: 5px 10px; font-size: 14px; margin-left: 5px;';
+        btnEditar.innerHTML = '<i class="fas fa-edit"></i>';
+        btnEditar.title = 'Editar';
+        btnEditar.addEventListener('click', () => abrirModalEdicion(feedback.id));
+        
+        const btnEliminar = document.createElement('button');
+        btnEliminar.className = 'btn btn-outline';
+        btnEliminar.style.cssText = 'padding: 5px 10px; font-size: 14px; margin-left: 5px;';
+        btnEliminar.innerHTML = '<i class="fas fa-trash"></i>';
+        btnEliminar.title = 'Eliminar';
+        btnEliminar.addEventListener('click', () => eliminarFeedback(feedback.id));
+        
+        tdAcciones.appendChild(btnVer);
+        tdAcciones.appendChild(btnEditar);
+        tdAcciones.appendChild(btnEliminar);
+        row.appendChild(tdAcciones);
+        
+        tbody.appendChild(row);
+    });
+}
+
+function verFeedback(id) {
+    const feedback = feedbacks.find(f => f.id === id);
+    if (!feedback) return;
+    
+    let detalles = `=== DETALLES DE RETROALIMENTACIÓN ===\n\n`;
+    detalles += `Folio: ${feedback.folio}\n`;
+    detalles += `Fecha: ${feedback.fecha}\n`;
+    detalles += `Tipo: ${feedback.tipo}\n`;
+    
+    if (feedback.tipo === 'Escrita') {
+        detalles += `Subtipo: ${feedback.subtipo}\n`;
+        detalles += `Área: ${feedback.area}\n`;
+        detalles += `Supervisor: ${feedback.liderNombre}\n`;
+        detalles += `N° Empleado: ${feedback.numEmpleado}\n`;
+        detalles += `Cuadrilla: ${feedback.cuadrillaColaborador}\n`;
+        detalles += `\nImpactos identificados:\n`;
+        detalles += feedback.impactos ? `- ${feedback.impactos.join('\n- ')}\n` : 'N/A\n';
+        detalles += `\nDescripción del impacto:\n${feedback.descripcionImpacto}\n`;
+        
+        if (feedback.causas && feedback.causas.length > 0) {
+            detalles += `\nCausas identificadas por el colaborador:\n`;
+            detalles += `- ${feedback.causas.join('\n- ')}\n`;
+            
+            if (feedback.explicacionCausa) {
+                detalles += `\nExplicación adicional del colaborador:\n${feedback.explicacionCausa}\n`;
             }
-            
-            // Crear objeto para contar retroalimentaciones por empleado con estadisticas detalladas
-            const empleadosMap = new Map();
-            
-            feedbacks.forEach(feedback => {
-                const numEmpleado = feedback.numEmpleado || 'N/A';
-                
-                if (!empleadosMap.has(numEmpleado)) {
-                    empleadosMap.set(numEmpleado, {
-                        numEmpleado: numEmpleado,
-                        nombreEmpleado: 'N/A',
-                        totalFeedback: 0,
-                        escritasMotivacion: 0,
-                        escritasDesarrollo: 0,
-                        verbales: 0,
-                        supervisores: new Set(),
-                        cuadrillaColaborador: '',
-                        cuadrillaSupervisor: '',
-                        fechas: new Set()
-                    });
-                }
-                
-                const empleado = empleadosMap.get(numEmpleado);
-                empleado.totalFeedback++;
-                empleado.fechas.add(feedback.fecha);
-                
-                // Contar tipos especificos
-                if (feedback.tipo === 'Escrita') {
-                    if (feedback.subtipo === 'Motivación') {
-                        empleado.escritasMotivacion++;
-                    } else if (feedback.subtipo === 'Desarrollo') {
-                        empleado.escritasDesarrollo++;
-                    }
-                } else if (feedback.tipo === 'Verbal') {
-                    empleado.verbales++;
-                }
-                
-                // Agregar supervisor
-                if (feedback.liderNombre) {
-                    const nombreSupervisor = feedback.liderNombre.split(' - ')[0];
-                    empleado.supervisores.add(nombreSupervisor);
-                }
-                
-                // Agregar cuadrilla del colaborador
-                if (feedback.cuadrillaColaborador) {
-                    empleado.cuadrillaColaborador = feedback.cuadrillaColaborador;
-                }
-                
-                // Determinar cuadrilla del supervisor (basado en area)
-                if (feedback.liderInfo && feedback.liderInfo.area) {
-                    empleado.cuadrillaSupervisor = feedback.liderInfo.area;
-                }
+        }
+        
+        if (feedback.accionDiferente) {
+            detalles += `\nAcción diferente sugerida por el colaborador:\n${feedback.accionDiferente}\n`;
+        }
+        
+        detalles += `\nCompromiso del colaborador:\n${feedback.compromiso}\n`;
+    } else {
+        detalles += `\nSupervisor: ${feedback.liderNombre}\n`;
+        detalles += `N° Empleado: ${feedback.numEmpleado}\n`;
+        detalles += `Cuadrilla: ${feedback.cuadrillaColaborador}\n`;
+        detalles += `\nRazón:\n${feedback.razon}\n`;
+        if (feedback.imagen) {
+            detalles += `\n(Incluye imagen adjunta)\n`;
+        }
+    }
+    
+    detalles += `\nRegistrado el: ${new Date(feedback.timestamp).toLocaleString()}`;
+    
+    alert(detalles);
+}
+
+function abrirModalEdicion(id) {
+    const feedback = feedbacks.find(f => f.id === id);
+    if (!feedback) return;
+    
+    document.getElementById('edit-id').value = feedback.id;
+    document.getElementById('edit-folio').value = feedback.folio;
+    document.getElementById('edit-fecha').value = feedback.fecha;
+    document.getElementById('edit-tipo').value = feedback.tipo;
+    document.getElementById('edit-area').value = feedback.area || '';
+    document.getElementById('edit-num-empleado').value = feedback.numEmpleado || '';
+    document.getElementById('edit-cuadrilla').value = feedback.cuadrillaColaborador || '';
+    
+    if (feedback.impactos) {
+        document.getElementById('edit-impacto').value = feedback.impactos.join(', ');
+    } else {
+        document.getElementById('edit-impacto').value = '';
+    }
+    
+    if (feedback.causas) {
+        document.getElementById('edit-causas').value = feedback.causas.join(', ');
+    } else {
+        document.getElementById('edit-causas').value = '';
+    }
+    
+    document.getElementById('edit-descripcion').value = 
+        feedback.descripcionImpacto || feedback.razon || '';
+    document.getElementById('edit-compromiso').value = feedback.compromiso || '';
+    
+    document.getElementById('edit-modal').style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+    document.getElementById('edit-form').reset();
+}
+
+async function saveEdit(e) {
+    e.preventDefault();
+    
+    const id = parseInt(document.getElementById('edit-id').value);
+    const index = feedbacks.findIndex(f => f.id === id);
+    
+    if (index === -1) return;
+    
+    feedbacks[index] = {
+        ...feedbacks[index],
+        fecha: document.getElementById('edit-fecha').value,
+        area: document.getElementById('edit-area').value,
+        numEmpleado: document.getElementById('edit-num-empleado').value,
+        cuadrillaColaborador: document.getElementById('edit-cuadrilla').value,
+        descripcionImpacto: document.getElementById('edit-descripcion').value || feedbacks[index].descripcionImpacto,
+        compromiso: document.getElementById('edit-compromiso').value || feedbacks[index].compromiso
+    };
+    
+    const saved = await saveAllData();
+    
+    if (saved) {
+        actualizarTablaFeedbacks();
+        closeEditModal();
+        alert('Cambios guardados exitosamente');
+    } else {
+        alert('Error al guardar los cambios');
+    }
+}
+
+async function eliminarFeedback(id) {
+    if (!confirm('¿Está seguro que desea eliminar esta retroalimentación?')) {
+        return;
+    }
+    
+    feedbacks = feedbacks.filter(f => f.id !== id);
+    const saved = await saveAllData();
+    
+    if (saved) {
+        actualizarDashboard();
+        alert('Retroalimentación eliminada exitosamente');
+    } else {
+        alert('Error al eliminar la retroalimentación');
+    }
+}
+
+function aplicarFiltro() {
+    const fecha = document.getElementById('filter-date').value;
+    if (!fecha) {
+        alert('Por favor seleccione una fecha');
+        return;
+    }
+    
+    actualizarTablaFeedbacks(fecha);
+}
+
+function limpiarFiltro() {
+    document.getElementById('filter-date').value = new Date().toISOString().split('T')[0];
+    actualizarTablaFeedbacks();
+}
+
+// ============================================
+// EXPORTACIÓN DE DATOS
+// ============================================
+
+function exportExcel() {
+    if (feedbacks.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+    }
+    
+    const empleadosMap = new Map();
+    
+    feedbacks.forEach(feedback => {
+        const numEmpleado = feedback.numEmpleado || 'N/A';
+        
+        if (!empleadosMap.has(numEmpleado)) {
+            empleadosMap.set(numEmpleado, {
+                numEmpleado: numEmpleado,
+                nombreEmpleado: 'N/A',
+                totalFeedback: 0,
+                escritasMotivacion: 0,
+                escritasDesarrollo: 0,
+                verbales: 0,
+                supervisores: new Set(),
+                cuadrillaColaborador: '',
+                cuadrillaSupervisor: '',
+                fechas: new Set()
             });
-            
-            // Convertir a array para exportar
-            const datosExportar = Array.from(empleadosMap.values()).map(empleado => ({
-                'N. Empleado': empleado.numEmpleado,
-                'Nombre Empleado': empleado.nombreEmpleado,
-                'Total Feedback': empleado.totalFeedback,
-                'Escritas Motivacion': empleado.escritasMotivacion,
-                'Escritas Desarrollo': empleado.escritasDesarrollo,
-                'Verbales': empleado.verbales,
-                'Coordinador/Supervisor': Array.from(empleado.supervisores).join(', '),
-                'Cuadrilla Colaborador': empleado.cuadrillaColaborador,
-                'Cuadrilla Coordinador': empleado.cuadrillaSupervisor,
-                
-            }));
-            
-            // Crear contenido CSV sin acentos y con nombres de columnas simples
-            let csvContent = "N. Empleado,Nombre Empleado,Total Feedback,Escritas Motivacion,Escritas Desarrollo,Verbales,Coordinador/Supervisor,Cuadrilla Colaborador,Cuadrilla Coordinador\n";
-            
-            datosExportar.forEach(empleado => {
-                const row = [
-                    empleado['N. Empleado'],
-                    `"${empleado['Nombre Empleado']}"`,
-                    empleado['Total Feedback'],
-                    empleado['Escritas Motivacion'],
-                    empleado['Escritas Desarrollo'],
-                    empleado['Verbales'],
-                    `"${empleado['Coordinador/Supervisor']}"`,
-                    empleado['Cuadrilla Colaborador'],
-                    empleado['Cuadrilla Coordinador'],
-                ];
-                
-                csvContent += row.join(',') + '\n';
-            });
-            
-            // Crear hoja adicional con estadisticas generales
-            let statsContent = "ESTADISTICAS GENERALES\n\n";
-            statsContent += "Metrica,Valor\n";
-            statsContent += `Total Empleados con Feedback,${datosExportar.length}\n`;
-            
-            const totalFeedbacks = datosExportar.reduce((sum, emp) => sum + emp['Total Feedback'], 0);
-            const totalMotivacion = datosExportar.reduce((sum, emp) => sum + emp['Escritas Motivacion'], 0);
-            const totalDesarrollo = datosExportar.reduce((sum, emp) => sum + emp['Escritas Desarrollo'], 0);
-            const totalVerbales = datosExportar.reduce((sum, emp) => sum + emp['Verbales'], 0);
-            
-            statsContent += `Total Retroalimentaciones,${totalFeedbacks}\n`;
-            statsContent += `Escritas Motivacion,${totalMotivacion}\n`;
-            statsContent += `Escritas Desarrollo,${totalDesarrollo}\n`;
-            statsContent += `Verbales,${totalVerbales}\n`;
-            
-            if (totalFeedbacks > 0) {
-                statsContent += `% Motivacion,${((totalMotivacion / totalFeedbacks) * 100).toFixed(2)}%\n`;
-                statsContent += `% Desarrollo,${((totalDesarrollo / totalFeedbacks) * 100).toFixed(2)}%\n`;
-                statsContent += `% Verbales,${((totalVerbales / totalFeedbacks) * 100).toFixed(2)}%\n`;
+        }
+        
+        const empleado = empleadosMap.get(numEmpleado);
+        empleado.totalFeedback++;
+        empleado.fechas.add(feedback.fecha);
+        
+        if (feedback.tipo === 'Escrita') {
+            if (feedback.subtipo === 'Motivación') {
+                empleado.escritasMotivacion++;
+            } else if (feedback.subtipo === 'Desarrollo') {
+                empleado.escritasDesarrollo++;
             }
-            
-            // Combinar ambos contenidos
-            const combinedContent = csvContent + "\n\n" + statsContent;
-            
-            // Crear y descargar archivo
-            const fecha = new Date().toISOString().split('T')[0];
-            const filename = `resumen_retroalimentaciones_${fecha}.csv`;
-            
-            const blob = new Blob([combinedContent], { type: 'text/csv;charset=utf-8;' });
-            
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            alert(`Se ha generado el archivo Excel con ${datosExportar.length} registros de empleados y estadisticas detalladas.`);
+        } else if (feedback.tipo === 'Verbal') {
+            empleado.verbales++;
         }
-
-        function openExportModal() {
-            // Llenar lista de retroalimentaciones
-            const checklist = document.getElementById('feedback-checklist');
-            checklist.innerHTML = '';
-            
-            // Ordenar feedbacks por fecha (más reciente primero) para el checklist
-            const feedbacksOrdenados = [...feedbacks].sort((a, b) => 
-                new Date(b.timestamp) - new Date(a.timestamp)
-            );
-            
-            feedbacksOrdenados.forEach((feedback, index) => {
-                const div = document.createElement('div');
-                div.className = 'checkbox-option';
-                div.style.marginBottom = '5px';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `feedback-${feedback.id}`;
-                checkbox.value = feedback.id;
-                checkbox.checked = true;
-                checkbox.className = 'feedback-checkbox';
-                
-                const label = document.createElement('label');
-                label.htmlFor = `feedback-${feedback.id}`;
-                label.textContent = `${feedback.folio} - ${feedback.tipo} - ${feedback.fecha}`;
-                
-                div.appendChild(checkbox);
-                div.appendChild(label);
-                checklist.appendChild(div);
-            });
-            
-            // Mostrar modal
-            document.getElementById('export-modal').style.display = 'block';
+        
+        if (feedback.liderNombre) {
+            const nombreSupervisor = feedback.liderNombre.split(' - ')[0];
+            empleado.supervisores.add(nombreSupervisor);
         }
-
-        function closeExportModal() {
-            document.getElementById('export-modal').style.display = 'none';
+        
+        if (feedback.cuadrillaColaborador) {
+            empleado.cuadrillaColaborador = feedback.cuadrillaColaborador;
         }
-
-        function generatePDFWithOptions() {
-            const exportOption = document.querySelector('input[name="export-option"]:checked').value;
-            let feedbacksToExport = [];
-            
-            if (exportOption === 'all') {
-                feedbacksToExport = [...feedbacks];
-            } else {
-                const selectedCheckboxes = document.querySelectorAll('.feedback-checkbox:checked');
-                if (selectedCheckboxes.length === 0) {
-                    alert('Por favor seleccione al menos una retroalimentación para exportar');
-                    return;
-                }
-                
-                const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
-                feedbacksToExport = feedbacks.filter(f => selectedIds.includes(f.id));
-            }
-            
-            const pdfTitle = document.getElementById('pdf-title').value || 'Reporte de Retroalimentaciones';
-            const pdfNotes = document.getElementById('pdf-notes').value;
-            
-            // Generar PDF con las retroalimentaciones seleccionadas
-            generatePDF(feedbacksToExport, pdfTitle, pdfNotes);
-            closeExportModal();
+        
+        if (feedback.liderInfo && feedback.liderInfo.area) {
+            empleado.cuadrillaSupervisor = feedback.liderInfo.area;
         }
+    });
+    
+    const datosExportar = Array.from(empleadosMap.values()).map(empleado => ({
+        'N. Empleado': empleado.numEmpleado,
+        'Nombre Empleado': empleado.nombreEmpleado,
+        'Total Feedback': empleado.totalFeedback,
+        'Escritas Motivacion': empleado.escritasMotivacion,
+        'Escritas Desarrollo': empleado.escritasDesarrollo,
+        'Verbales': empleado.verbales,
+        'Coordinador/Supervisor': Array.from(empleado.supervisores).join(', '),
+        'Cuadrilla Colaborador': empleado.cuadrillaColaborador,
+        'Cuadrilla Coordinador': empleado.cuadrillaSupervisor,
+    }));
+    
+    let csvContent = "N. Empleado,Nombre Empleado,Total Feedback,Escritas Motivacion,Escritas Desarrollo,Verbales,Coordinador/Supervisor,Cuadrilla Colaborador,Cuadrilla Coordinador\n";
+    
+    datosExportar.forEach(empleado => {
+        const row = [
+            empleado['N. Empleado'],
+            `"${empleado['Nombre Empleado']}"`,
+            empleado['Total Feedback'],
+            empleado['Escritas Motivacion'],
+            empleado['Escritas Desarrollo'],
+            empleado['Verbales'],
+            `"${empleado['Coordinador/Supervisor']}"`,
+            empleado['Cuadrilla Colaborador'],
+            empleado['Cuadrilla Coordinador'],
+        ];
+        
+        csvContent += row.join(',') + '\n';
+    });
+    
+    let statsContent = "ESTADISTICAS GENERALES\n\n";
+    statsContent += "Metrica,Valor\n";
+    statsContent += `Total Empleados con Feedback,${datosExportar.length}\n`;
+    
+    const totalFeedbacks = datosExportar.reduce((sum, emp) => sum + emp['Total Feedback'], 0);
+    const totalMotivacion = datosExportar.reduce((sum, emp) => sum + emp['Escritas Motivacion'], 0);
+    const totalDesarrollo = datosExportar.reduce((sum, emp) => sum + emp['Escritas Desarrollo'], 0);
+    const totalVerbales = datosExportar.reduce((sum, emp) => sum + emp['Verbales'], 0);
+    
+    statsContent += `Total Retroalimentaciones,${totalFeedbacks}\n`;
+    statsContent += `Escritas Motivacion,${totalMotivacion}\n`;
+    statsContent += `Escritas Desarrollo,${totalDesarrollo}\n`;
+    statsContent += `Verbales,${totalVerbales}\n`;
+    
+    if (totalFeedbacks > 0) {
+        statsContent += `% Motivacion,${((totalMotivacion / totalFeedbacks) * 100).toFixed(2)}%\n`;
+        statsContent += `% Desarrollo,${((totalDesarrollo / totalFeedbacks) * 100).toFixed(2)}%\n`;
+        statsContent += `% Verbales,${((totalVerbales / totalFeedbacks) * 100).toFixed(2)}%\n`;
+    }
+    
+    const combinedContent = csvContent + "\n\n" + statsContent;
+    
+    const fecha = new Date().toISOString().split('T')[0];
+    const filename = `resumen_retroalimentaciones_${fecha}.csv`;
+    
+    const blob = new Blob([combinedContent], { type: 'text/csv;charset=utf-8;' });
+    
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    alert(`Se ha generado el archivo Excel con ${datosExportar.length} registros de empleados y estadisticas detalladas.`);
+}
 
-        function generatePDF(feedbacksToExport, title, notes) {
-            if (feedbacksToExport.length === 0) {
-                alert('No hay datos para exportar');
-                return;
-            }
+function openExportModal() {
+    const checklist = document.getElementById('feedback-checklist');
+    checklist.innerHTML = '';
+    
+    const feedbacksOrdenados = [...feedbacks].sort((a, b) => 
+        new Date(b.timestamp) - new Date(a.timestamp)
+    );
+    
+    feedbacksOrdenados.forEach((feedback, index) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-option';
+        div.style.marginBottom = '5px';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `feedback-${feedback.id}`;
+        checkbox.value = feedback.id;
+        checkbox.checked = true;
+        checkbox.className = 'feedback-checkbox';
+        
+        const label = document.createElement('label');
+        label.htmlFor = `feedback-${feedback.id}`;
+        label.textContent = `${feedback.folio} - ${feedback.tipo} - ${feedback.fecha}`;
+        
+        div.appendChild(checkbox);
+        div.appendChild(label);
+        checklist.appendChild(div);
+    });
+    
+    document.getElementById('export-modal').style.display = 'block';
+}
+
+function closeExportModal() {
+    document.getElementById('export-modal').style.display = 'none';
+}
+
+function generatePDFWithOptions() {
+    const exportOption = document.querySelector('input[name="export-option"]:checked').value;
+    let feedbacksToExport = [];
+    
+    if (exportOption === 'all') {
+        feedbacksToExport = [...feedbacks];
+    } else {
+        const selectedCheckboxes = document.querySelectorAll('.feedback-checkbox:checked');
+        if (selectedCheckboxes.length === 0) {
+            alert('Por favor seleccione al menos una retroalimentación para exportar');
+            return;
+        }
+        
+        const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+        feedbacksToExport = feedbacks.filter(f => selectedIds.includes(f.id));
+    }
+    
+    const pdfTitle = document.getElementById('pdf-title').value || 'Reporte de Retroalimentaciones';
+    const pdfNotes = document.getElementById('pdf-notes').value;
+    
+    generatePDF(feedbacksToExport, pdfTitle, pdfNotes);
+    closeExportModal();
+}
+
+function generatePDF(feedbacksToExport, title, notes) {
+    if (feedbacksToExport.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+    }
+    
+    const feedbacksOrdenados = [...feedbacksToExport].sort((a, b) => 
+        new Date(b.timestamp) - new Date(a.timestamp)
+    );
+    
+    const total = feedbacksOrdenados.length;
+    const escritas = feedbacksOrdenados.filter(f => f.tipo === 'Escrita').length;
+    const verbales = feedbacksOrdenados.filter(f => f.tipo === 'Verbal').length;
+    const motivacion = feedbacksOrdenados.filter(f => f.subtipo === 'Motivación').length;
+    const desarrollo = feedbacksOrdenados.filter(f => f.subtipo === 'Desarrollo').length;
+    
+    let htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #CF002E; text-align: center; }
+                h2 { color: #333; border-bottom: 2px solid #FDD000; padding-bottom: 5px; }
+                h3 { color: #555; margin-top: 20px; }
+                .fecha-generacion { text-align: right; color: #666; margin-bottom: 30px; }
+                .feedback-item { 
+                    border: 1px solid #ddd; 
+                    margin-bottom: 20px; 
+                    padding: 15px; 
+                    page-break-inside: avoid;
+                }
+                .feedback-header { 
+                    background-color: #f5f5f5; 
+                    padding: 10px; 
+                    margin-bottom: 10px;
+                    border-left: 4px solid #CF002E;
+                }
+                .feedback-details { margin-left: 20px; }
+                .label { font-weight: bold; color: #555; }
+                .value { margin-bottom: 8px; }
+                .section { margin-bottom: 15px; }
+                .badge { 
+                    display: inline-block; 
+                    padding: 3px 8px; 
+                    border-radius: 4px; 
+                    font-size: 0.9em; 
+                    font-weight: bold; 
+                    margin-right: 5px;
+                }
+                .escrita { background-color: #FDD000; color: #333; }
+                .verbal { background-color: #CF002E; color: white; }
+                .motivacion { background-color: #4CAF50; color: white; }
+                .desarrollo { background-color: #2196F3; color: white; }
+                .signature-section { 
+                    margin-top: 20px; 
+                    padding-top: 10px; 
+                    border-top: 1px dashed #ddd; 
+                }
+                .signature-line { 
+                    width: 300px; 
+                    border-bottom: 1px solid #333; 
+                    margin-top: 40px;
+                    text-align: center;
+                    padding-bottom: 5px;
+                }
+                .signature-label { 
+                    font-size: 0.9em; 
+                    color: #666; 
+                    text-align: center;
+                    margin-top: 5px;
+                }
+                .total-stats { 
+                    background-color: #f8f9fa; 
+                    padding: 15px; 
+                    margin-bottom: 20px;
+                    border-radius: 5px;
+                }
+                .stat-item { 
+                    display: inline-block; 
+                    margin-right: 30px; 
+                    padding: 10px;
+                    background-color: white;
+                    border-radius: 5px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                .stat-number { 
+                    font-size: 24px; 
+                    font-weight: bold; 
+                    color: #CF002E;
+                    display: block;
+                }
+                .stat-label { font-size: 0.9em; color: #666; }
+                .notes-section {
+                    background-color: #fffde7;
+                    padding: 15px;
+                    margin: 20px 0;
+                    border-left: 4px solid #FDD000;
+                    border-radius: 5px;
+                }
+                .page-break { page-break-before: always; }
+            </style>
+        </head>
+        <body>
+            <h1>${title}</h1>
+            <div class="fecha-generacion">
+                Generado: ${new Date().toLocaleString()}
+            </div>
             
-            // Ordenar feedbacks por fecha (más reciente primero)
-            const feedbacksOrdenados = [...feedbacksToExport].sort((a, b) => 
-                new Date(b.timestamp) - new Date(a.timestamp)
-            );
+            ${notes ? `
+            <div class="notes-section">
+                <h3>Notas:</h3>
+                <p>${notes.replace(/\n/g, '<br>')}</p>
+            </div>
+            ` : ''}
             
-            // Estadísticas específicas para el reporte
-            const total = feedbacksOrdenados.length;
-            const escritas = feedbacksOrdenados.filter(f => f.tipo === 'Escrita').length;
-            const verbales = feedbacksOrdenados.filter(f => f.tipo === 'Verbal').length;
-            const motivacion = feedbacksOrdenados.filter(f => f.subtipo === 'Motivación').length;
-            const desarrollo = feedbacksOrdenados.filter(f => f.subtipo === 'Desarrollo').length;
-            
-            // Crear contenido HTML para el PDF
-            let htmlContent = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        h1 { color: #CF002E; text-align: center; }
-                        h2 { color: #333; border-bottom: 2px solid #FDD000; padding-bottom: 5px; }
-                        h3 { color: #555; margin-top: 20px; }
-                        .fecha-generacion { text-align: right; color: #666; margin-bottom: 30px; }
-                        .feedback-item { 
-                            border: 1px solid #ddd; 
-                            margin-bottom: 20px; 
-                            padding: 15px; 
-                            page-break-inside: avoid;
-                        }
-                        .feedback-header { 
-                            background-color: #f5f5f5; 
-                            padding: 10px; 
-                            margin-bottom: 10px;
-                            border-left: 4px solid #CF002E;
-                        }
-                        .feedback-details { margin-left: 20px; }
-                        .label { font-weight: bold; color: #555; }
-                        .value { margin-bottom: 8px; }
-                        .section { margin-bottom: 15px; }
-                        .badge { 
-                            display: inline-block; 
-                            padding: 3px 8px; 
-                            border-radius: 4px; 
-                            font-size: 0.9em; 
-                            font-weight: bold; 
-                            margin-right: 5px;
-                        }
-                        .escrita { background-color: #FDD000; color: #333; }
-                        .verbal { background-color: #CF002E; color: white; }
-                        .motivacion { background-color: #4CAF50; color: white; }
-                        .desarrollo { background-color: #2196F3; color: white; }
-                        .signature-section { 
-                            margin-top: 20px; 
-                            padding-top: 10px; 
-                            border-top: 1px dashed #ddd; 
-                        }
-                        .signature-line { 
-                            width: 300px; 
-                            border-bottom: 1px solid #333; 
-                            margin-top: 40px;
-                            text-align: center;
-                            padding-bottom: 5px;
-                        }
-                        .signature-label { 
-                            font-size: 0.9em; 
-                            color: #666; 
-                            text-align: center;
-                            margin-top: 5px;
-                        }
-                        .total-stats { 
-                            background-color: #f8f9fa; 
-                            padding: 15px; 
-                            margin-bottom: 20px;
-                            border-radius: 5px;
-                        }
-                        .stat-item { 
-                            display: inline-block; 
-                            margin-right: 30px; 
-                            padding: 10px;
-                            background-color: white;
-                            border-radius: 5px;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        }
-                        .stat-number { 
-                            font-size: 24px; 
-                            font-weight: bold; 
-                            color: #CF002E;
-                            display: block;
-                        }
-                        .stat-label { font-size: 0.9em; color: #666; }
-                        .notes-section {
-                            background-color: #fffde7;
-                            padding: 15px;
-                            margin: 20px 0;
-                            border-left: 4px solid #FDD000;
-                            border-radius: 5px;
-                        }
-                        .page-break { page-break-before: always; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${title}</h1>
-                    <div class="fecha-generacion">
-                        Generado: ${new Date().toLocaleString()}
-                    </div>
-                    
-                    ${notes ? `
-                    <div class="notes-section">
-                        <h3>Notas:</h3>
-                        <p>${notes.replace(/\n/g, '<br>')}</p>
-                    </div>
-                    ` : ''}
-                    
-                    <div class="total-stats">
-                        <h2>Estadísticas del Reporte</h2>
-                        <div class="stat-item">
-                            <span class="stat-number">${total}</span>
-                            <span class="stat-label">Total retroalimentaciones</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">${escritas}</span>
-                            <span class="stat-label">Escritas</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">${verbales}</span>
-                            <span class="stat-label">Verbales</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">${motivacion}</span>
-                            <span class="stat-label">Motivación</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">${desarrollo}</span>
-                            <span class="stat-label">Desarrollo</span>
-                        </div>
-                    </div>
-            `;
-            
-            // Agregar cada retroalimentación
-            feedbacksOrdenados.forEach((feedback, index) => {
-                let tipoBadge = '';
-                if (feedback.tipo === 'Escrita') {
-                    if (feedback.subtipo === 'Motivación') {
-                        tipoBadge = '<span class="badge escrita motivacion">Escrita - Motivación</span>';
-                    } else {
-                        tipoBadge = '<span class="badge escrita desarrollo">Escrita - Desarrollo</span>';
-                    }
-                } else {
-                    tipoBadge = '<span class="badge verbal">Verbal</span>';
-                }
-                
-                htmlContent += `
-                    <div class="feedback-item">
-                        <div class="feedback-header">
-                            <h3>${feedback.folio} ${tipoBadge}</h3>
-                            <div>Fecha: ${feedback.fecha} | Registrado: ${new Date(feedback.timestamp).toLocaleString()}</div>
-                        </div>
-                        
-                        <div class="section">
-                            <div class="value"><span class="label">N. Empleado:</span> ${feedback.numEmpleado || 'N/A'}</div>
-                            <div class="value"><span class="label">Supervisor/Coordinador:</span> ${feedback.liderNombre || 'N/A'}</div>
-                            <div class="value"><span class="label">Cuadrilla colaborador:</span> ${feedback.cuadrillaColaborador || 'N/A'}</div>
-                            <div class="value"><span class="label">Area:</span> ${feedback.area || 'N/A'}</div>
-                        </div>
-                `;
-                
-                if (feedback.tipo === 'Escrita') {
-                    htmlContent += `
-                        <div class="section">
-                            <div class="value"><span class="label">Impactos identificados:</span></div>
-                            <div class="feedback-details">${feedback.impactos ? feedback.impactos.map(i => `• ${i}`).join('<br>') : 'N/A'}</div>
-                        </div>
-                        
-                        <div class="section">
-                            <div class="value"><span class="label">Descripcion del impacto:</span></div>
-                            <div class="feedback-details">${feedback.descripcionImpacto || 'N/A'}</div>
-                        </div>
-                        
-                        ${feedback.causas && feedback.causas.length > 0 ? `
-                        <div class="section">
-                            <div class="value"><span class="label">Causas identificadas por el colaborador:</span></div>
-                            <div class="feedback-details">${feedback.causas.map(c => `• ${c}`).join('<br>')}</div>
-                        </div>
-                        ` : ''}
-                        
-                        ${feedback.explicacionCausa ? `
-                        <div class="section">
-                            <div class="value"><span class="label">Explicacion adicional del colaborador:</span></div>
-                            <div class="feedback-details">${feedback.explicacionCausa}</div>
-                        </div>
-                        ` : ''}
-                        
-                        ${feedback.accionDiferente ? `
-                        <div class="section">
-                            <div class="value"><span class="label">Accion diferente sugerida:</span></div>
-                            <div class="feedback-details">${feedback.accionDiferente}</div>
-                        </div>
-                        ` : ''}
-                        
-                        <div class="section">
-                            <div class="value"><span class="label">Compromiso del colaborador:</span></div>
-                            <div class="feedback-details">${feedback.compromiso || 'N/A'}</div>
-                        </div>
-                    `;
-                } else {
-                    htmlContent += `
-                        <div class="section">
-                            <div class="value"><span class="label">Razon de la retroalimentacion:</span></div>
-                            <div class="feedback-details">${feedback.razon || 'N/A'}</div>
-                        </div>
-                    `;
-                }
-                
-                // Sección de firmas
-                htmlContent += `
-                    <div class="signature-section">
-                        <h4>Firmas:</h4>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                `;
-
-                // Mostrar firma del colaborador si existe
-                if (feedback.firmas && feedback.firmas.colaborador) {
-                    htmlContent += `
-                        <div style="text-align: center; margin: 10px;">
-                            <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
-                                <img src="${feedback.firmas.colaborador}" 
-                                     style="max-width: 200px; max-height: 80px; object-fit: contain;" 
-                                     alt="Firma del colaborador">
-                            </div>
-                            <div class="signature-label">Firma del Colaborador</div>
-                        </div>
-                    `;
-                } else {
-                    htmlContent += `
-                        <div style="text-align: center; margin: 10px;">
-                            <div class="signature-line"></div>
-                            <div class="signature-label">Firma del Colaborador</div>
-                        </div>
-                    `;
-                }
-
-                // Mostrar firma del supervisor si existe
-                if (feedback.firmas && feedback.firmas.supervisor) {
-                    htmlContent += `
-                        <div style="text-align: center; margin: 10px;">
-                            <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
-                                <img src="${feedback.firmas.supervisor}" 
-                                     style="max-width: 200px; max-height: 80px; object-fit: contain;" 
-                                     alt="Firma del supervisor">
-                            </div>
-                            <div class="signature-label">Firma del Supervisor</div>
-                        </div>
-                    `;
-                } else {
-                    htmlContent += `
-                        <div style="text-align: center; margin: 10px;">
-                            <div class="signature-line"></div>
-                            <div class="signature-label">Firma del Supervisor</div>
-                        </div>
-                    `;
-                }
-
-                // Para retroalimentación escrita, mostrar las otras firmas
-                if (feedback.tipo === 'Escrita') {
-                    // Firma sindical
-                    if (feedback.firmas && feedback.firmas.sindical) {
-                        htmlContent += `
-                            <div style="text-align: center; margin: 10px;">
-                                <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
-                                    <img src="${feedback.firmas.sindical}" 
-                                         style="max-width: 200px; max-height: 80px; object-fit: contain;" 
-                                         alt="Firma del líder sindical">
-                                </div>
-                                <div class="signature-label">Firma del Líder Sindical</div>
-                            </div>
-                        `;
-                    } else {
-                        htmlContent += `
-                            <div style="text-align: center; margin: 10px;">
-                                <div class="signature-line"></div>
-                                <div class="signature-label">Firma del Líder Sindical</div>
-                            </div>
-                        `;
-                    }
-                    
-                    // Firma de recursos humanos
-                    if (feedback.firmas && feedback.firmas.rh) {
-                        htmlContent += `
-                            <div style="text-align: center; margin: 10px;">
-                                <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
-                                    <img src="${feedback.firmas.rh}" 
-                                         style="max-width: 200px; max-height: 80px; object-fit: contain;" 
-                                         alt="Firma de recursos humanos">
-                                </div>
-                                <div class="signature-label">Firma de Recursos Humanos</div>
-                            </div>
-                        `;
-                    } else {
-                        htmlContent += `
-                            <div style="text-align: center; margin: 10px;">
-                                <div class="signature-line"></div>
-                                <div class="signature-label">Firma de Recursos Humanos</div>
-                            </div>
-                        `;
-                    }
-                } else {
-                    htmlContent += `
-                        <div style="text-align: center; margin: 10px;">
-                            <div class="signature-line"></div>
-                            <div class="signature-label">Firma del Coordinador</div>
-                        </div>
-                    `;
-                }
-
-                htmlContent += `
-                        </div>
-                    </div>
+            <div class="total-stats">
+                <h2>Estadísticas del Reporte</h2>
+                <div class="stat-item">
+                    <span class="stat-number">${total}</span>
+                    <span class="stat-label">Total retroalimentaciones</span>
                 </div>
-                `;
-                
-                // Agregar salto de página cada 3 retroalimentaciones
-                if ((index + 1) % 3 === 0 && (index + 1) < feedbacksOrdenados.length) {
-                    htmlContent += '<div class="page-break"></div>';
-                }
-            });
-            
-            htmlContent += `
-                    </body>
-                    </html>
-                `;
-            
-            // Crear y mostrar el PDF
-            const fecha = new Date().toISOString().split('T')[0];
-            const filename = `reporte_retroalimentaciones_${fecha}.pdf`;
-            
-            const ventana = window.open('', '_blank');
-            ventana.document.write(htmlContent);
-            ventana.document.close();
-            
-            alert(`Se ha generado el reporte PDF con ${feedbacksOrdenados.length} retroalimentaciones.`);
+                <div class="stat-item">
+                    <span class="stat-number">${escritas}</span>
+                    <span class="stat-label">Escritas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${verbales}</span>
+                    <span class="stat-label">Verbales</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${motivacion}</span>
+                    <span class="stat-label">Motivación</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${desarrollo}</span>
+                    <span class="stat-label">Desarrollo</span>
+                </div>
+            </div>
+    `;
+    
+    feedbacksOrdenados.forEach((feedback, index) => {
+        let tipoBadge = '';
+        if (feedback.tipo === 'Escrita') {
+            if (feedback.subtipo === 'Motivación') {
+                tipoBadge = '<span class="badge escrita motivacion">Escrita - Motivación</span>';
+            } else {
+                tipoBadge = '<span class="badge escrita desarrollo">Escrita - Desarrollo</span>';
+            }
+        } else {
+            tipoBadge = '<span class="badge verbal">Verbal</span>';
         }
         
+        htmlContent += `
+            <div class="feedback-item">
+                <div class="feedback-header">
+                    <h3>${feedback.folio} ${tipoBadge}</h3>
+                    <div>Fecha: ${feedback.fecha} | Registrado: ${new Date(feedback.timestamp).toLocaleString()}</div>
+                </div>
+                
+                <div class="section">
+                    <div class="value"><span class="label">N. Empleado:</span> ${feedback.numEmpleado || 'N/A'}</div>
+                    <div class="value"><span class="label">Supervisor/Coordinador:</span> ${feedback.liderNombre || 'N/A'}</div>
+                    <div class="value"><span class="label">Cuadrilla colaborador:</span> ${feedback.cuadrillaColaborador || 'N/A'}</div>
+                    <div class="value"><span class="label">Area:</span> ${feedback.area || 'N/A'}</div>
+                </div>
+        `;
+        
+        if (feedback.tipo === 'Escrita') {
+            htmlContent += `
+                <div class="section">
+                    <div class="value"><span class="label">Impactos identificados:</span></div>
+                    <div class="feedback-details">${feedback.impactos ? feedback.impactos.map(i => `• ${i}`).join('<br>') : 'N/A'}</div>
+                </div>
+                
+                <div class="section">
+                    <div class="value"><span class="label">Descripcion del impacto:</span></div>
+                    <div class="feedback-details">${feedback.descripcionImpacto || 'N/A'}</div>
+                </div>
+                
+                ${feedback.causas && feedback.causas.length > 0 ? `
+                <div class="section">
+                    <div class="value"><span class="label">Causas identificadas por el colaborador:</span></div>
+                    <div class="feedback-details">${feedback.causas.map(c => `• ${c}`).join('<br>')}</div>
+                </div>
+                ` : ''}
+                
+                ${feedback.explicacionCausa ? `
+                <div class="section">
+                    <div class="value"><span class="label">Explicacion adicional del colaborador:</span></div>
+                    <div class="feedback-details">${feedback.explicacionCausa}</div>
+                </div>
+                ` : ''}
+                
+                ${feedback.accionDiferente ? `
+                <div class="section">
+                    <div class="value"><span class="label">Accion diferente sugerida:</span></div>
+                    <div class="feedback-details">${feedback.accionDiferente}</div>
+                </div>
+                ` : ''}
+                
+                <div class="section">
+                    <div class="value"><span class="label">Compromiso del colaborador:</span></div>
+                    <div class="feedback-details">${feedback.compromiso || 'N/A'}</div>
+                </div>
+            `;
+        } else {
+            htmlContent += `
+                <div class="section">
+                    <div class="value"><span class="label">Razon de la retroalimentacion:</span></div>
+                    <div class="feedback-details">${feedback.razon || 'N/A'}</div>
+                </div>
+            `;
+        }
+        
+        htmlContent += `
+            <div class="signature-section">
+                <h4>Firmas:</h4>
+                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+        `;
+
+        if (feedback.firmas && feedback.firmas.colaborador) {
+            htmlContent += `
+                <div style="text-align: center; margin: 10px;">
+                    <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
+                        <img src="${feedback.firmas.colaborador}" 
+                             style="max-width: 200px; max-height: 80px; object-fit: contain;" 
+                             alt="Firma del colaborador">
+                    </div>
+                    <div class="signature-label">Firma del Colaborador</div>
+                </div>
+            `;
+        } else {
+            htmlContent += `
+                <div style="text-align: center; margin: 10px;">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Firma del Colaborador</div>
+                </div>
+            `;
+        }
+
+        if (feedback.firmas && feedback.firmas.supervisor) {
+            htmlContent += `
+                <div style="text-align: center; margin: 10px;">
+                    <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
+                        <img src="${feedback.firmas.supervisor}" 
+                             style="max-width: 200px; max-height: 80px; object-fit: contain;" 
+                             alt="Firma del supervisor">
+                    </div>
+                    <div class="signature-label">Firma del Supervisor</div>
+                </div>
+            `;
+        } else {
+            htmlContent += `
+                <div style="text-align: center; margin: 10px;">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Firma del Supervisor</div>
+                </div>
+            `;
+        }
+
+        if (feedback.tipo === 'Escrita') {
+            if (feedback.firmas && feedback.firmas.sindical) {
+                htmlContent += `
+                    <div style="text-align: center; margin: 10px;">
+                        <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
+                            <img src="${feedback.firmas.sindical}" 
+                                 style="max-width: 200px; max-height: 80px; object-fit: contain;" 
+                                 alt="Firma del líder sindical">
+                        </div>
+                        <div class="signature-label">Firma del Líder Sindical</div>
+                    </div>
+                `;
+            } else {
+                htmlContent += `
+                    <div style="text-align: center; margin: 10px;">
+                        <div class="signature-line"></div>
+                        <div class="signature-label">Firma del Líder Sindical</div>
+                    </div>
+                `;
+            }
+            
+            if (feedback.firmas && feedback.firmas.rh) {
+                htmlContent += `
+                    <div style="text-align: center; margin: 10px;">
+                        <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
+                            <img src="${feedback.firmas.rh}" 
+                                 style="max-width: 200px; max-height: 80px; object-fit: contain;" 
+                                 alt="Firma de recursos humanos">
+                        </div>
+                        <div class="signature-label">Firma de Recursos Humanos</div>
+                    </div>
+                `;
+            } else {
+                htmlContent += `
+                    <div style="text-align: center; margin: 10px;">
+                        <div class="signature-line"></div>
+                        <div class="signature-label">Firma de Recursos Humanos</div>
+                    </div>
+                `;
+            }
+        } else {
+            htmlContent += `
+                <div style="text-align: center; margin: 10px;">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Firma del Coordinador</div>
+                </div>
+            `;
+        }
+
+        htmlContent += `
+                </div>
+            </div>
+        </div>
+        `;
+        
+        if ((index + 1) % 3 === 0 && (index + 1) < feedbacksOrdenados.length) {
+            htmlContent += '<div class="page-break"></div>';
+        }
+    });
+    
+    htmlContent += `
+            </body>
+            </html>
+        `;
+    
+    const fecha = new Date().toISOString().split('T')[0];
+    const filename = `reporte_retroalimentaciones_${fecha}.pdf`;
+    
+    const ventana = window.open('', '_blank');
+    ventana.document.write(htmlContent);
+    ventana.document.close();
+    
+    alert(`Se ha generado el reporte PDF con ${feedbacksOrdenados.length} retroalimentaciones.`);
+}
     </script>
 </body>
 </html>
