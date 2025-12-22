@@ -331,7 +331,7 @@
             background-color: rgba(207, 0, 46, 0.05);
         }
         
-        /* Firma digital */
+        /* Firma digital - DISEÑO ORIGINAL */
         .signature-container {
             border: 1px solid var(--medium-gray);
             border-radius: var(--border-radius);
@@ -782,7 +782,20 @@
                         
                         <div class="form-group">
                             <label for="cuadrilla-colaborador" class="required">Cuadrilla colaborador</label>
-                            <input type="text" id="cuadrilla-colaborador" placeholder="Número de cuadrilla" required>
+                            <select id="cuadrilla-colaborador" required>
+                                <option value="">Seleccionar cuadrilla</option>
+                                <option value="Cuadrilla 1">Cuadrilla 1</option>
+                                <option value="Cuadrilla 2">Cuadrilla 2</option>
+                                <option value="Cuadrilla 3">Cuadrilla 3</option>
+                                <option value="Cuadrilla 4">Cuadrilla 4</option>
+                                <option value="Cuadrilla 5">Cuadrilla 5</option>
+                                <option value="Cuadrilla 6">Cuadrilla 6</option>
+                                <option value="Cuadrilla 7">Cuadrilla 7</option>
+                                <option value="Cuadrilla 8">Cuadrilla 8</option>
+                                <option value="Cuadrilla 9">Cuadrilla 9</option>
+                                <option value="Cuadrilla 10">Cuadrilla 10</option>
+                                <option value="Otro">Otro</option>
+                            </select>
                         </div>
                         
                         <div class="form-group">
@@ -794,6 +807,40 @@
                     <div id="seccion-colaborador" class="colaborador-section hidden">
                         <h4><i class="fas fa-search"></i> Análisis del Colaborador</h4>
                         <p class="info-text">Esta sección se completará con información proporcionada por el colaborador.</p>
+                        
+                        <div class="form-group">
+                            <label class="required">Causa del Problema</label>
+                            <div class="checkbox-vertical">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="causa-problema" value="Falta de capacitación">
+                                    <span>Falta de capacitación</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="causa-problema" value="Falta de herramientas">
+                                    <span>Falta de herramientas</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="causa-problema" value="Falta de tiempo">
+                                    <span>Falta de tiempo</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="causa-problema" value="Desconocimiento del procedimiento">
+                                    <span>Desconocimiento del procedimiento</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="causa-problema" value="Falta de comunicación">
+                                    <span>Falta de comunicación</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="causa-problema" value="Falta de concentración">
+                                    <span>Falta de concentración</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="causa-problema" value="Otro">
+                                    <span>Otro</span>
+                                </label>
+                            </div>
+                        </div>
                         
                         <div class="form-group">
                             <label for="explicacion-causa-colaborador">Explicación de las causas (colaborador)</label>
@@ -960,7 +1007,20 @@
                         
                         <div class="form-group">
                             <label for="cuadrilla-verbal-colaborador" class="required">Cuadrilla colaborador</label>
-                            <input type="text" id="cuadrilla-verbal-colaborador" placeholder="Número de cuadrilla" required>
+                            <select id="cuadrilla-verbal-colaborador" required>
+                                <option value="">Seleccionar cuadrilla</option>
+                                <option value="Cuadrilla 1">Cuadrilla 1</option>
+                                <option value="Cuadrilla 2">Cuadrilla 2</option>
+                                <option value="Cuadrilla 3">Cuadrilla 3</option>
+                                <option value="Cuadrilla 4">Cuadrilla 4</option>
+                                <option value="Cuadrilla 5">Cuadrilla 5</option>
+                                <option value="Cuadrilla 6">Cuadrilla 6</option>
+                                <option value="Cuadrilla 7">Cuadrilla 7</option>
+                                <option value="Cuadrilla 8">Cuadrilla 8</option>
+                                <option value="Cuadrilla 9">Cuadrilla 9</option>
+                                <option value="Cuadrilla 10">Cuadrilla 10</option>
+                                <option value="Otro">Otro</option>
+                            </select>
                         </div>
                         
                         <div class="form-group">
@@ -1283,6 +1343,7 @@
         </div>
     </div>
 
+    <!-- EL SCRIPT SE MANTIENE COMPLETO SIN CAMBIOS -->
     <script>
 // ============================================
 // CONFIGURACIÓN INICIAL Y ESTADO DE LA APLICACIÓN
