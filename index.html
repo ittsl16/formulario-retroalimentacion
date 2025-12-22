@@ -623,7 +623,6 @@
     </style>
 </head>
 <body>
-    <body>
     <!-- Login Screen -->
     <div id="login-screen" class="login-container">
         <h2><i class="fas fa-lock"></i> Acceso al Sistema</h2>
@@ -696,7 +695,438 @@
         </header>
         
         <div class="container">
-            <!-- ... (todo el contenido de la app permanece igual) ... -->
+            <!-- Navegación -->
+            <div class="nav-tabs">
+                <div class="nav-tab supervisor-only" data-tab="form-escrita">Retroalimentación Escrita</div>
+                <div class="nav-tab supervisor-only" data-tab="form-verbal">Retroalimentación Verbal</div>
+                <div class="nav-tab admin-only" data-tab="admin">Panel de Administración</div>
+            </div>
+            
+            <!-- Formulario Retroalimentación Escrita -->
+            <div id="form-escrita" class="content hidden">
+                <div class="alert alert-success hidden" id="escrita-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Retroalimentación guardada exitosamente.</span>
+                </div>
+                
+                <form id="formEscrita">
+                    <div class="form-section">
+                        <h3><i class="fas fa-info-circle"></i> Información Básica</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="folio-escrita" class="required">Folio</label>
+                                <input type="text" id="folio-escrita" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="fecha-escrita" class="required">Fecha</label>
+                                <input type="date" id="fecha-escrita" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="required">Tipo de Feedback</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="tipo-feedback-escrita" value="Motivación" checked>
+                                    <span>Motivación</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="tipo-feedback-escrita" value="Desarrollo">
+                                    <span>Desarrollo</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="area" class="required">Área</label>
+                            <select id="area" required>
+                                <option value="">Seleccionar área</option>
+                                <option value="A">Área A</option>
+                                <option value="B">Área B</option>
+                                <option value="C">Área C</option>
+                                <option value="D">Área D</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                            <div id="area-otro-container" class="hidden">
+                                <input type="text" id="area-otro" placeholder="Especificar área">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lider" class="required">Líder</label>
+                            <select id="lider" required>
+                                <option value="">Seleccionar líder</option>
+                            </select>
+                            <div id="lider-otro-container" class="lider-otro-container hidden">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="lider-otro-nombre" class="required">Nombre del líder</label>
+                                        <input type="text" id="lider-otro-nombre" placeholder="Nombre completo">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lider-otro-puesto" class="required">Puesto</label>
+                                        <input type="text" id="lider-otro-puesto" placeholder="Puesto">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lider-otro-area" class="required">Área del líder</label>
+                                    <input type="text" id="lider-otro-area" placeholder="Área">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-user"></i> Información del Colaborador</h3>
+                        
+                        <div class="form-group">
+                            <label for="cuadrilla-colaborador" class="required">Cuadrilla colaborador</label>
+                            <input type="text" id="cuadrilla-colaborador" placeholder="Número de cuadrilla" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="num-empleado" class="required">N° empleado</label>
+                            <input type="text" id="num-empleado" placeholder="Número de empleado" required>
+                        </div>
+                    </div>
+                    
+                    <div id="seccion-colaborador" class="colaborador-section hidden">
+                        <h4><i class="fas fa-search"></i> Análisis del Colaborador</h4>
+                        <p class="info-text">Esta sección se completará con información proporcionada por el colaborador.</p>
+                        
+                        <div class="form-group">
+                            <label for="explicacion-causa-colaborador">Explicación de las causas (colaborador)</label>
+                            <textarea id="explicacion-causa-colaborador" placeholder="El colaborador explica las causas del problema..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="accion-diferente">¿Qué hubiera hecho diferente? (colaborador)</label>
+                            <textarea id="accion-diferente" placeholder="El colaborador describe qué hubiera hecho diferente..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-bullseye"></i> Impacto Identificado</h3>
+                        
+                        <div class="form-group">
+                            <label class="required">Tipos de Impacto</label>
+                            <div class="checkbox-vertical">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="impacto" value="Seguridad">
+                                    <span>Seguridad</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="impacto" value="Calidad">
+                                    <span>Calidad</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="impacto" value="Productividad">
+                                    <span>Productividad</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="impacto" value="Medio Ambiente">
+                                    <span>Medio Ambiente</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="impacto" value="Costos">
+                                    <span>Costos</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="descripcion-impacto" class="required">Descripción del Impacto</label>
+                            <textarea id="descripcion-impacto" placeholder="Describa el impacto identificado..." required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-clipboard-check"></i> Compromiso</h3>
+                        
+                        <div class="form-group">
+                            <label for="compromiso" class="required">Compromiso del Colaborador</label>
+                            <textarea id="compromiso" placeholder="Compromiso acordado con el colaborador..." required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-signature"></i> Firmas</h3>
+                        
+                        <!-- Firma Colaborador -->
+                        <div class="signature-container">
+                            <h4>Firma del Colaborador</h4>
+                            <canvas id="signature-canvas-colaborador" class="signature-canvas"></canvas>
+                            <div class="signature-controls">
+                                <button type="button" class="btn btn-outline" id="clear-colaborador">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Firma Supervisor -->
+                        <div class="signature-container">
+                            <h4>Firma del Supervisor</h4>
+                            <canvas id="signature-canvas-supervisor" class="signature-canvas"></canvas>
+                            <div class="signature-controls">
+                                <button type="button" class="btn btn-outline" id="clear-supervisor">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Firma Líder Sindical -->
+                        <div class="signature-container">
+                            <h4>Firma del Líder Sindical</h4>
+                            <canvas id="signature-canvas-sindical" class="signature-canvas"></canvas>
+                            <div class="signature-controls">
+                                <button type="button" class="btn btn-outline" id="clear-sindical">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Firma Recursos Humanos -->
+                        <div class="signature-container">
+                            <h4>Firma de Recursos Humanos</h4>
+                            <canvas id="signature-canvas-rh" class="signature-canvas"></canvas>
+                            <div class="signature-controls">
+                                <button type="button" class="btn btn-outline" id="clear-rh">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" id="reset-escrita">
+                            <i class="fas fa-redo"></i> Limpiar Formulario
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Retroalimentación
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Formulario Retroalimentación Verbal -->
+            <div id="form-verbal" class="content hidden">
+                <div class="alert alert-success hidden" id="verbal-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Retroalimentación verbal guardada exitosamente.</span>
+                </div>
+                
+                <form id="formVerbal">
+                    <div class="form-section">
+                        <h3><i class="fas fa-info-circle"></i> Información Básica</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="folio-verbal" class="required">Folio</label>
+                                <input type="text" id="folio-verbal" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="fecha-verbal" class="required">Fecha</label>
+                                <input type="date" id="fecha-verbal" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lider-verbal" class="required">Líder</label>
+                            <select id="lider-verbal" required>
+                                <option value="">Seleccionar líder</option>
+                            </select>
+                            <div id="lider-verbal-otro-container" class="lider-otro-container hidden">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="lider-verbal-otro-nombre" class="required">Nombre del líder</label>
+                                        <input type="text" id="lider-verbal-otro-nombre" placeholder="Nombre completo">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lider-verbal-otro-puesto" class="required">Puesto</label>
+                                        <input type="text" id="lider-verbal-otro-puesto" placeholder="Puesto">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lider-verbal-otro-area" class="required">Área del líder</label>
+                                    <input type="text" id="lider-verbal-otro-area" placeholder="Área">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-user"></i> Información del Colaborador</h3>
+                        
+                        <div class="form-group">
+                            <label for="cuadrilla-verbal-colaborador" class="required">Cuadrilla colaborador</label>
+                            <input type="text" id="cuadrilla-verbal-colaborador" placeholder="Número de cuadrilla" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="num-empleado-verbal" class="required">N° empleado</label>
+                            <input type="text" id="num-empleado-verbal" placeholder="Número de empleado" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-comment"></i> Retroalimentación Verbal</h3>
+                        
+                        <div class="form-group">
+                            <label for="razon-verbal" class="required">Razón de la retroalimentación</label>
+                            <textarea id="razon-verbal" placeholder="Describa la razón de la retroalimentación verbal..." required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="image-upload-area">Imagen (Opcional)</label>
+                            <div class="image-upload" id="image-upload-area">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
+                                <p>Haz clic o arrastra una imagen aquí</p>
+                                <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                            </div>
+                            <img id="image-preview" class="image-preview" alt="Vista previa">
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-signature"></i> Firmas</h3>
+                        
+                        <!-- Firma Colaborador -->
+                        <div class="signature-container">
+                            <h4>Firma del Colaborador</h4>
+                            <canvas id="signature-canvas-verbal-colaborador" class="signature-canvas"></canvas>
+                            <div class="signature-controls">
+                                <button type="button" class="btn btn-outline" id="clear-verbal-colaborador">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Firma Supervisor -->
+                        <div class="signature-container">
+                            <h4>Firma del Supervisor</h4>
+                            <canvas id="signature-canvas-verbal-supervisor" class="signature-canvas"></canvas>
+                            <div class="signature-controls">
+                                <button type="button" class="btn btn-outline" id="clear-verbal-supervisor">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" id="reset-verbal">
+                            <i class="fas fa-redo"></i> Limpiar Formulario
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Retroalimentación
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Panel de Administración -->
+            <div id="admin" class="content hidden">
+                <div class="admin-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Panel de Administración</h2>
+                    <div class="button-group" style="margin: 0;">
+                        <button class="btn btn-primary" id="export-excel">
+                            <i class="fas fa-file-excel"></i> Exportar Excel
+                        </button>
+                        <button class="btn btn-secondary" id="export-pdf">
+                            <i class="fas fa-file-pdf"></i> Exportar PDF
+                        </button>
+                        <button class="btn btn-outline" id="refresh-data">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="admin-controls">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="filter-date">Filtrar por fecha</label>
+                        <input type="date" id="filter-date">
+                    </div>
+                    <div class="button-group" style="margin: 0; align-items: flex-end;">
+                        <button class="btn btn-primary" id="filter-apply">
+                            <i class="fas fa-filter"></i> Aplicar Filtro
+                        </button>
+                        <button class="btn btn-outline" id="filter-clear">
+                            <i class="fas fa-times"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-feedbacks">0</h3>
+                            <p>Total Retroalimentaciones</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="escritas-count">0</h3>
+                            <p>Retroalimentaciones Escritas</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="verbales-count">0</h3>
+                            <p>Retroalimentaciones Verbales</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="colaboradores-count">0</h3>
+                            <p>Colaboradores Únicos</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-list"></i> Lista de Retroalimentaciones</h3>
+                
+                <div class="table-container">
+                    <table id="feedbacks-table">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>N° Empleado</th>
+                                <th>Supervisor</th>
+                                <th>Área</th>
+                                <th>Cuadrilla</th>
+                                <th>Impacto/Razón</th>
+                                <th>Causas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feedbacks-tbody">
+                            <!-- Datos se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                    <div id="no-data-message" style="text-align: center; padding: 40px; display: none;">
+                        <i class="fas fa-database" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
+                        <p>No hay retroalimentaciones registradas.</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -734,7 +1164,124 @@
         </div>
     </div>
 
-    <!-- ... (modales de edición y exportación permanecen igual) ... -->
+    <!-- Modal de exportación PDF -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-pdf"></i> Exportar a PDF</h2>
+                <button class="close-modal" id="close-export-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="pdf-title">Título del Reporte</label>
+                <input type="text" id="pdf-title" value="Reporte de Retroalimentaciones" placeholder="Título del reporte">
+            </div>
+            <div class="form-group">
+                <label for="pdf-notes">Notas Adicionales (Opcional)</label>
+                <textarea id="pdf-notes" placeholder="Agregar notas o comentarios adicionales..." rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Seleccionar Retroalimentaciones</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="export-option" value="all" checked>
+                        <span>Todas las retroalimentaciones</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="export-option" value="selected">
+                        <span>Seleccionar retroalimentaciones específicas</span>
+                    </label>
+                </div>
+                <div id="feedback-selection-container" class="hidden" style="margin-top: 15px; max-height: 200px; overflow-y: auto; border: 1px solid var(--medium-gray); padding: 15px; border-radius: var(--border-radius);">
+                    <div id="feedback-checklist">
+                        <!-- Las retroalimentaciones se cargarán aquí -->
+                    </div>
+                    <div class="button-group" style="margin-top: 15px;">
+                        <button type="button" class="btn btn-outline" id="select-all-btn">
+                            <i class="fas fa-check-square"></i> Seleccionar Todos
+                        </button>
+                        <button type="button" class="btn btn-outline" id="deselect-all-btn">
+                            <i class="fas fa-square"></i> Deseleccionar Todos
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button type="button" class="btn btn-outline" id="cancel-export">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="generate-pdf">
+                    <i class="fas fa-download"></i> Generar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de edición -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Editar Retroalimentación</h2>
+                <button class="close-modal" id="close-edit-modal">&times;</button>
+            </div>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-folio">Folio</label>
+                        <input type="text" id="edit-folio" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-fecha">Fecha</label>
+                        <input type="date" id="edit-fecha" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-tipo">Tipo</label>
+                        <input type="text" id="edit-tipo" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-area">Área</label>
+                        <input type="text" id="edit-area">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-num-empleado">N° Empleado</label>
+                        <input type="text" id="edit-num-empleado">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-cuadrilla">Cuadrilla</label>
+                        <input type="text" id="edit-cuadrilla">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-impacto">Impactos</label>
+                    <input type="text" id="edit-impacto">
+                </div>
+                <div class="form-group">
+                    <label for="edit-causas">Causas</label>
+                    <input type="text" id="edit-causas">
+                </div>
+                <div class="form-group">
+                    <label for="edit-descripcion">Descripción/Razón</label>
+                    <textarea id="edit-descripcion" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-compromiso">Compromiso</label>
+                    <textarea id="edit-compromiso" rows="3"></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="btn btn-outline" id="cancel-edit">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
 // ============================================
