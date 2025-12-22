@@ -1342,304 +1342,459 @@
     </div>
 
     <script>
-        // ============================================
-        // CONFIGURACIÓN INICIAL Y ESTADO DE LA APLICACIÓN
-        // ============================================
+       // ============================================
+// CONFIGURACIÓN INICIAL Y ESTADO DE LA APLICACIÓN
+// ============================================
+
+// Credenciales de usuarios
+const USERS = {
+    supervisor: { password: "sup123", name: "Supervisor" },
+    admin: { password: "admin123", name: "Administrador" }
+};
+
+// Variables de estado
+let currentUser = null;
+let feedbacks = [];
+let nextFolioEscrita = 1;
+let nextFolioVerbal = 1;
+
+// Configuración de GitHub para almacenamiento
+let GITHUB_CONFIG = {
+    token: null,
+    repo: 'retroalimentacion-db',
+    username: null,
+    feedbackFile: 'feedbacks.json',
+    countersFile: 'counters.json'
+};
+
+// Función para cargar configuración guardada
+function loadGitHubConfig() {
+    const savedConfig = localStorage.getItem('github_config');
+    if (savedConfig) {
+        try {
+            const config = JSON.parse(savedConfig);
+            GITHUB_CONFIG.username = config.username || null;
+            GITHUB_CONFIG.repo = config.repo || 'retroalimentacion-db';
+            GITHUB_CONFIG.token = config.token || null;
+            
+            console.log('Configuración GitHub cargada:', {
+                username: GITHUB_CONFIG.username,
+                repo: GITHUB_CONFIG.repo,
+                tokenConfigurado: !!GITHUB_CONFIG.token
+            });
+        } catch (error) {
+            console.error('Error cargando configuración GitHub:', error);
+        }
+    }
+}
+
+// ============================================
+// FUNCIONES DE ALMACENAMIENTO EN GITHUB - SIMPLIFICADAS
+// ============================================
+
+// Función simplificada para verificar conexión a GitHub
+async function probarConexionGitHub() {
+    try {
+        if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
+            return { conectado: false, error: 'No configurado' };
+        }
         
-        // Credenciales de usuarios
-        const USERS = {
-            supervisor: { password: "sup123", name: "Supervisor" },
-            admin: { password: "admin123", name: "Administrador" }
+        // Probar conexión básica a GitHub API
+        const response = await fetch('https://api.github.com/user', {
+            headers: {
+                'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!response.ok) {
+            return { 
+                conectado: false, 
+                error: `Token inválido: ${response.status}` 
+            };
+        }
+        
+        const userData = await response.json();
+        console.log('✅ Conexión GitHub exitosa. Usuario:', userData.login);
+        
+        return { 
+            conectado: true, 
+            usuario: userData.login,
+            repos_url: userData.repos_url
         };
         
-        // Variables de estado
-        let currentUser = null;
-        let feedbacks = [];
-        let nextFolioEscrita = 1;
-        let nextFolioVerbal = 1;
-
-        // Configuración de GitHub para almacenamiento
-        let GITHUB_CONFIG = {
-            token: null,
-            repo: 'retroalimentacion-db',
-            username: null,
-            feedbackFile: 'feedbacks.json',
-            countersFile: 'counters.json'
+    } catch (error) {
+        console.error('Error probando conexión GitHub:', error);
+        return { 
+            conectado: false, 
+            error: error.message 
         };
+    }
+}
 
-        // Función para cargar configuración guardada
-        function loadGitHubConfig() {
-            const savedConfig = localStorage.getItem('github_config');
-            if (savedConfig) {
-                try {
-                    const config = JSON.parse(savedConfig);
-                    GITHUB_CONFIG.username = config.username || null;
-                    GITHUB_CONFIG.repo = config.repo || 'retroalimentacion-db';
-                    GITHUB_CONFIG.token = config.token || null;
-                    
-                    console.log('Configuración GitHub cargada:', {
-                        username: GITHUB_CONFIG.username,
-                        repo: GITHUB_CONFIG.repo,
-                        tokenConfigurado: !!GITHUB_CONFIG.token
-                    });
-                } catch (error) {
-                    console.error('Error cargando configuración GitHub:', error);
+// Función para verificar si el repositorio existe (mejorada)
+async function verificarRepositorioGitHub() {
+    try {
+        const conexion = await probarConexionGitHub();
+        if (!conexion.conectado) {
+            return { existe: false, error: conexion.error };
+        }
+        
+        // Intentar acceder al repositorio
+        const response = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
                 }
             }
+        );
+        
+        if (response.ok) {
+            const repoData = await response.json();
+            console.log('✅ Repositorio encontrado:', repoData.full_name);
+            return { 
+                existe: true, 
+                data: repoData,
+                esPublico: !repoData.private
+            };
         }
+        
+        if (response.status === 404) {
+            console.log('❌ Repositorio no encontrado');
+            return { 
+                existe: false, 
+                error: 'Repositorio no encontrado. Asegúrate de que existe y tienes acceso.' 
+            };
+        }
+        
+        // Otro error
+        const errorData = await response.json();
+        return { 
+            existe: false, 
+            error: `Error ${response.status}: ${errorData.message || 'Error de GitHub'}` 
+        };
+        
+    } catch (error) {
+        console.error('Error verificando repositorio:', error);
+        return { 
+            existe: false, 
+            error: `Error de conexión: ${error.message}` 
+        };
+    }
+}
 
-        // ============================================
-        // FUNCIONES DE ALMACENAMIENTO EN GITHUB
-        // ============================================
+// Función para crear repositorio en GitHub
+async function crearRepositorioGitHub() {
+    try {
+        const conexion = await probarConexionGitHub();
+        if (!conexion.conectado) {
+            return { creado: false, error: conexion.error };
+        }
+        
+        console.log('🔄 Creando repositorio...');
+        
+        const response = await fetch('https://api.github.com/user/repos', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+                name: GITHUB_CONFIG.repo,
+                description: 'Base de datos para retroalimentaciones',
+                private: false, // Cambia a true si quieres privado
+                auto_init: true, // Inicializar con README
+                gitignore_template: 'Node', // Template de gitignore
+                license_template: 'mit' // Licencia MIT
+            })
+        });
+        
+        if (response.ok || response.status === 201) {
+            const repoData = await response.json();
+            console.log('✅ Repositorio creado:', repoData.html_url);
+            return { 
+                creado: true, 
+                url: repoData.html_url,
+                data: repoData 
+            };
+        }
+        
+        const errorData = await response.json();
+        console.error('Error creando repositorio:', errorData);
+        
+        // Si ya existe, verificar si podemos acceder
+        if (errorData.errors && errorData.errors.some(e => e.message.includes('already exists'))) {
+            console.log('El repositorio ya existe, verificando acceso...');
+            const verificacion = await verificarRepositorioGitHub();
+            return { 
+                creado: verificacion.existe, 
+                yaExistia: true,
+                error: verificacion.existe ? null : 'Repositorio existe pero no tienes acceso'
+            };
+        }
+        
+        return { 
+            creado: false, 
+            error: `Error ${response.status}: ${errorData.message || 'Error desconocido'}` 
+        };
+        
+    } catch (error) {
+        console.error('Error creando repositorio:', error);
+        return { 
+            creado: false, 
+            error: `Error de conexión: ${error.message}` 
+        };
+    }
+}
 
-        async function verificarRepositorio() {
-            try {
-                if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
-                    console.log('GitHub no configurado completamente');
-                    return false;
+// Función principal para guardar en GitHub
+async function saveToGitHub(filename, data) {
+    try {
+        // Verificar configuración básica
+        if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
+            console.log('GitHub no configurado, usando localStorage');
+            localStorage.setItem(filename, JSON.stringify(data));
+            return { success: true, source: 'localStorage' };
+        }
+        
+        // Primero verificar si tenemos conexión
+        const conexion = await probarConexionGitHub();
+        if (!conexion.conectado) {
+            console.log('Sin conexión a GitHub, usando localStorage:', conexion.error);
+            localStorage.setItem(filename, JSON.stringify(data));
+            return { success: true, source: 'localStorage', error: conexion.error };
+        }
+        
+        // Verificar si el repositorio existe
+        const repoInfo = await verificarRepositorioGitHub();
+        if (!repoInfo.existe) {
+            console.log('Repositorio no disponible, usando localStorage:', repoInfo.error);
+            localStorage.setItem(filename, JSON.stringify(data));
+            
+            // Intentar crear el repositorio automáticamente
+            setTimeout(async () => {
+                const creado = await crearRepositorioGitHub();
+                if (creado.creado) {
+                    console.log('Repositorio creado automáticamente. Próximos guardados irán a GitHub.');
                 }
-                
-                const response = await fetch(
-                    `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
+            }, 1000);
+            
+            return { success: true, source: 'localStorage', repoError: repoInfo.error };
+        }
+        
+        // Obtener SHA del archivo existente (si existe)
+        let sha = null;
+        try {
+            const shaResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
                     }
-                );
-                
-                return response.ok;
-            } catch (error) {
-                console.error('Error verificando repositorio:', error);
-                return false;
+                }
+            );
+            
+            if (shaResponse.ok) {
+                const fileData = await shaResponse.json();
+                sha = fileData.sha;
             }
+        } catch (shaError) {
+            console.log(`Archivo ${filename} no existe, se creará nuevo`);
         }
-
-        async function saveToGitHub(filename, data) {
-            try {
-                // Verificar si GitHub está configurado
-                if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
-                    console.log('GitHub no configurado completamente, usando localStorage');
-                    localStorage.setItem(filename, JSON.stringify(data));
-                    return { success: true, source: 'localStorage' };
-                }
-                
-                // Verificar si el repositorio existe
-                const repoExiste = await verificarRepositorio();
-                if (!repoExiste) {
-                    console.log('Repositorio no disponible, usando localStorage');
-                    localStorage.setItem(filename, JSON.stringify(data));
-                    return { success: true, source: 'localStorage' };
-                }
-                
-                // Obtener SHA del archivo existente (si existe)
-                let sha = null;
-                try {
-                    const shaResponse = await fetch(
-                        `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`,
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-                                'Accept': 'application/vnd.github.v3+json'
-                            }
-                        }
-                    );
-                    
-                    if (shaResponse.ok) {
-                        const fileData = await shaResponse.json();
-                        sha = fileData.sha;
-                    }
-                } catch (shaError) {
-                    console.log(`Archivo ${filename} no existe, se creará nuevo`);
-                }
-                
-                // Crear contenido (manejar correctamente caracteres especiales)
-                const contenido = JSON.stringify(data, null, 2);
-                const content = btoa(unescape(encodeURIComponent(contenido)));
-                
-                // Configurar el cuerpo
-                const body = {
-                    message: `Actualizar ${filename} - ${new Date().toISOString()}`,
-                    content: content,
-                    ...(sha ? { sha: sha } : {})
-                };
-                
-                console.log(`Subiendo ${filename} a GitHub...`);
-                
-                // Subir a GitHub
-                const response = await fetch(
-                    `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/vnd.github.v3+json'
-                        },
-                        body: JSON.stringify(body)
-                    }
-                );
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('Error GitHub:', errorData);
-                    
-                    // Si es error 404, el archivo o repositorio no existe
-                    if (response.status === 404) {
-                        console.log(`Repositorio o archivo no encontrado: ${GITHUB_CONFIG.repo}/${filename}`);
-                        throw new Error(`Repositorio no encontrado. Verifica que "${GITHUB_CONFIG.repo}" exista en tu cuenta GitHub.`);
-                    }
-                    
-                    throw new Error(`GitHub API error: ${response.status} - ${errorData.message}`);
-                }
-                
-                console.log(`✅ Guardado exitoso en GitHub: ${filename}`);
-                const result = await response.json();
-                return { 
-                    success: true, 
-                    source: 'github',
-                    data: result 
-                };
-                
-            } catch (error) {
-                console.error(`❌ Error guardando en GitHub (${filename}):`, error.message);
-                
-                // Fallback a localStorage
+        
+        // Preparar contenido
+        const contenido = JSON.stringify(data, null, 2);
+        const content = btoa(unescape(encodeURIComponent(contenido)));
+        
+        // Configurar la solicitud
+        const body = {
+            message: `Actualizar ${filename} - ${new Date().toISOString()}`,
+            content: content,
+            ...(sha ? { sha: sha } : {})
+        };
+        
+        console.log(`Subiendo ${filename} a GitHub...`);
+        
+        // Subir a GitHub
+        const response = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify(body)
+            }
+        );
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error GitHub:', errorData);
+            
+            // Si es error 404 o 403, el repositorio no existe o no tenemos acceso
+            if (response.status === 404 || response.status === 403) {
+                console.log('No se puede acceder al repositorio, usando localStorage');
                 localStorage.setItem(filename, JSON.stringify(data));
-                console.log(`Usando localStorage para ${filename}`);
-                
                 return { 
                     success: true, 
                     source: 'localStorage-fallback', 
-                    error: error.message 
+                    error: `Sin acceso al repositorio: ${errorData.message}` 
                 };
             }
+            
+            throw new Error(`GitHub API error: ${response.status} - ${errorData.message}`);
         }
+        
+        console.log(`✅ Guardado exitoso en GitHub: ${filename}`);
+        const result = await response.json();
+        return { 
+            success: true, 
+            source: 'github',
+            data: result 
+        };
+        
+    } catch (error) {
+        console.error(`❌ Error guardando en GitHub (${filename}):`, error.message);
+        
+        // Fallback a localStorage
+        localStorage.setItem(filename, JSON.stringify(data));
+        console.log(`Usando localStorage para ${filename}`);
+        
+        return { 
+            success: true, 
+            source: 'localStorage-fallback', 
+            error: error.message 
+        };
+    }
+}
 
-        async function loadFromGitHub(filename) {
-            try {
-                // Verificar si GitHub está configurado
-                if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
-                    console.log('GitHub no configurado, usando localStorage');
-                    const localData = localStorage.getItem(filename);
-                    return localData ? JSON.parse(localData) : getDefaultData(filename);
+// Función para cargar desde GitHub
+async function loadFromGitHub(filename) {
+    try {
+        // Verificar configuración básica
+        if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username) {
+            console.log('GitHub no configurado, usando localStorage');
+            const localData = localStorage.getItem(filename);
+            return localData ? JSON.parse(localData) : getDefaultData(filename);
+        }
+        
+        // Verificar repositorio
+        const repoInfo = await verificarRepositorioGitHub();
+        if (!repoInfo.existe) {
+            console.log('Repositorio no disponible, usando localStorage');
+            const localData = localStorage.getItem(filename);
+            return localData ? JSON.parse(localData) : getDefaultData(filename);
+        }
+        
+        // Intentar cargar desde GitHub
+        const response = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
                 }
-                
-                // Verificar repositorio primero
-                const repoExiste = await verificarRepositorio();
-                if (!repoExiste) {
-                    console.log('Repositorio no disponible, usando localStorage');
-                    const localData = localStorage.getItem(filename);
-                    return localData ? JSON.parse(localData) : getDefaultData(filename);
-                }
-                
-                // Intentar cargar desde GitHub
-                const response = await fetch(
-                    `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    }
-                );
-                
-                if (response.status === 404) {
-                    console.log(`Archivo ${filename} no encontrado en GitHub, usando datos por defecto`);
-                    const defaultData = getDefaultData(filename);
-                    // No intentamos crear el archivo automáticamente para evitar problemas
-                    return defaultData;
-                }
-                
-                if (!response.ok) {
-                    throw new Error(`GitHub API error: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                // Decodificar contenido
-                const decodedContent = decodeURIComponent(escape(atob(data.content)));
-                console.log(`✅ Cargado desde GitHub: ${filename}`);
-                return JSON.parse(decodedContent);
-                
-            } catch (error) {
-                console.error(`Error cargando ${filename} desde GitHub:`, error.message);
-                
-                // Fallback a localStorage
-                const localData = localStorage.getItem(filename);
-                if (localData) {
-                    console.log(`Usando localStorage para ${filename}`);
-                    return JSON.parse(localData);
-                }
-                
-                // Si no hay datos en localStorage, usar datos por defecto
-                console.log(`Creando ${filename} por defecto`);
-                return getDefaultData(filename);
             }
+        );
+        
+        if (response.status === 404) {
+            console.log(`Archivo ${filename} no encontrado en GitHub, usando datos por defecto`);
+            return getDefaultData(filename);
         }
-
-        function getDefaultData(filename) {
-            if (filename === GITHUB_CONFIG.feedbackFile) {
-                return [];
-            } else if (filename === GITHUB_CONFIG.countersFile) {
-                return { 
-                    nextFolioEscrita: 1, 
-                    nextFolioVerbal: 1 
-                };
-            }
-            return null;
+        
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
         }
-
-        // Función para cargar todos los datos
-        async function loadAllData() {
-            try {
-                // Cargar configuración de GitHub
-                loadGitHubConfig();
-                
-                console.log('Estado de GitHub:', {
-                    token: GITHUB_CONFIG.token ? 'Configurado' : 'No configurado',
-                    username: GITHUB_CONFIG.username,
-                    repo: GITHUB_CONFIG.repo
-                });
-                
-                const [loadedFeedbacks, counters] = await Promise.all([
-                    loadFromGitHub(GITHUB_CONFIG.feedbackFile),
-                    loadFromGitHub(GITHUB_CONFIG.countersFile)
-                ]);
-                
-                feedbacks = loadedFeedbacks;
-                nextFolioEscrita = counters.nextFolioEscrita || 1;
-                nextFolioVerbal = counters.nextFolioVerbal || 1;
-                
-                console.log(`Datos cargados: ${feedbacks.length} feedbacks`);
-                console.log('Fuente:', counters.source || 'localStorage');
-                
-                return true;
-            } catch (error) {
-                console.error('Error loading data:', error);
-                return false;
-            }
+        
+        const data = await response.json();
+        
+        // Decodificar contenido
+        const decodedContent = decodeURIComponent(escape(atob(data.content)));
+        console.log(`✅ Cargado desde GitHub: ${filename}`);
+        return JSON.parse(decodedContent);
+        
+    } catch (error) {
+        console.error(`Error cargando ${filename} desde GitHub:`, error.message);
+        
+        // Fallback a localStorage
+        const localData = localStorage.getItem(filename);
+        if (localData) {
+            console.log(`Usando localStorage para ${filename}`);
+            return JSON.parse(localData);
         }
+        
+        // Si no hay datos en localStorage, usar datos por defecto
+        console.log(`Creando ${filename} por defecto`);
+        return getDefaultData(filename);
+    }
+}
 
-        // Función para guardar todos los datos
-        async function saveAllData() {
-            try {
-                const feedbacksPromise = saveToGitHub(GITHUB_CONFIG.feedbackFile, feedbacks);
-                const countersPromise = saveToGitHub(GITHUB_CONFIG.countersFile, {
-                    nextFolioEscrita: nextFolioEscrita,
-                    nextFolioVerbal: nextFolioVerbal
-                });
-                
-                await Promise.all([feedbacksPromise, countersPromise]);
-                console.log('All data saved');
-                return true;
-            } catch (error) {
-                console.error('Error saving data:', error);
-                return false;
-            }
-        }
+function getDefaultData(filename) {
+    if (filename === GITHUB_CONFIG.feedbackFile) {
+        return [];
+    } else if (filename === GITHUB_CONFIG.countersFile) {
+        return { 
+            nextFolioEscrita: 1, 
+            nextFolioVerbal: 1 
+        };
+    }
+    return null;
+}
 
+// Función para cargar todos los datos
+async function loadAllData() {
+    try {
+        // Cargar configuración de GitHub
+        loadGitHubConfig();
+        
+        console.log('Estado de GitHub:', {
+            token: GITHUB_CONFIG.token ? 'Configurado' : 'No configurado',
+            username: GITHUB_CONFIG.username,
+            repo: GITHUB_CONFIG.repo
+        });
+        
+        const [loadedFeedbacks, counters] = await Promise.all([
+            loadFromGitHub(GITHUB_CONFIG.feedbackFile),
+            loadFromGitHub(GITHUB_CONFIG.countersFile)
+        ]);
+        
+        feedbacks = loadedFeedbacks;
+        nextFolioEscrita = counters.nextFolioEscrita || 1;
+        nextFolioVerbal = counters.nextFolioVerbal || 1;
+        
+        console.log(`Datos cargados: ${feedbacks.length} feedbacks`);
+        console.log('Fuente:', counters.source || 'localStorage');
+        
+        return true;
+    } catch (error) {
+        console.error('Error loading data:', error);
+        return false;
+    }
+}
+
+// Función para guardar todos los datos
+async function saveAllData() {
+    try {
+        const feedbacksPromise = saveToGitHub(GITHUB_CONFIG.feedbackFile, feedbacks);
+        const countersPromise = saveToGitHub(GITHUB_CONFIG.countersFile, {
+            nextFolioEscrita: nextFolioEscrita,
+            nextFolioVerbal: nextFolioVerbal
+        });
+        
+        await Promise.all([feedbacksPromise, countersPromise]);
+        console.log('All data saved');
+        return true;
+    } catch (error) {
+        console.error('Error saving data:', error);
+        return false;
+    }
+}
         // Función auxiliar para capturar firmas de los canvas
         function capturarFirmas(formType = 'escrita') {
             const firmas = {};
@@ -1985,122 +2140,164 @@
             }
         }
         
-        function saveGitHubConfig() {
-            const username = document.getElementById('github-username').value.trim();
-            const token = document.getElementById('github-token').value.trim();
-            const repo = document.getElementById('github-repo').value.trim() || 'retroalimentacion-db';
-            
-            if (!username || !token) {
-                alert('❌ Por favor ingresa tu nombre de usuario y token de GitHub');
-                return;
-            }
-            
-            // Actualizar configuración
-            GITHUB_CONFIG.username = username;
-            GITHUB_CONFIG.token = token;
-            GITHUB_CONFIG.repo = repo;
-            
-            // Guardar en localStorage
-            localStorage.setItem('github_config', JSON.stringify({
-                username: username,
-                token: token,
-                repo: repo
-            }));
-            
-            alert('✅ Configuración de GitHub guardada.\nLos datos se guardarán en la nube.');
-            
-            // Ocultar sección de configuración
-            document.getElementById('github-config-section').classList.add('hidden');
-            document.getElementById('btn-config-github').classList.add('hidden');
-            
-            // Recargar datos desde GitHub
-            loadAllData().then(() => {
-                if (currentUser === 'admin') {
-                    actualizarDashboard();
-                }
-                alert('✅ Datos sincronizados con GitHub exitosamente.');
-            }).catch(error => {
-                console.error('Error sincronizando con GitHub:', error);
-                alert('⚠️ Los datos se guardarán en localStorage por ahora.');
-            });
-        }
+        // Función mejorada para guardar configuración de GitHub
+async function saveGitHubConfig() {
+    const username = document.getElementById('github-username').value.trim();
+    const token = document.getElementById('github-token').value.trim();
+    const repo = document.getElementById('github-repo').value.trim() || 'retroalimentacion-db';
+    
+    if (!username || !token) {
+        alert('❌ Por favor ingresa tu nombre de usuario y token de GitHub');
+        return;
+    }
+    
+    // Validar token básico
+    if (token.length < 10 || (!token.startsWith('ghp_') && !token.startsWith('github_pat_'))) {
+        alert('⚠️ El token parece no tener un formato válido.\nLos tokens generalmente empiezan con "ghp_" o "github_pat_"');
+        // Continuar de todos modos
+    }
+    
+    // Mostrar mensaje de procesamiento
+    const mensajeOriginal = document.getElementById('btn-save-github-config').innerHTML;
+    document.getElementById('btn-save-github-config').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    document.getElementById('btn-save-github-config').disabled = true;
+    
+    try {
+        // Actualizar configuración temporalmente
+        const tempConfig = {
+            token: token,
+            username: username,
+            repo: repo
+        };
         
-        function promptGitHubConfig() {
-    // Crear un modal mejorado
-    const username = prompt('📝 Nombre de usuario de GitHub:', GITHUB_CONFIG.username || '');
-    if (!username) {
-        alert('Configuración cancelada');
-        return;
-    }
-    
-    const token = prompt('🔑 Token de acceso personal de GitHub\n\nIMPORTANTE: El token debe tener permisos "repo":', '');
-    if (!token) {
-        alert('Configuración cancelada');
-        return;
-    }
-    
-    const repo = prompt('📁 Nombre del repositorio (DEBE existir en tu cuenta GitHub):', 
-                       GITHUB_CONFIG.repo || 'retroalimentacion-db');
-    
-    if (!repo) {
-        alert('Debes especificar un nombre de repositorio');
-        return;
-    }
-    
-    // Actualizar configuración
-    GITHUB_CONFIG.username = username;
-    GITHUB_CONFIG.token = token;
-    GITHUB_CONFIG.repo = repo;
-    
-    // Guardar en localStorage
-    localStorage.setItem('github_config', JSON.stringify({
-        username: username,
-        token: token,
-        repo: repo
-    }));
-    
-    alert('⏳ Verificando configuración...');
-    
-    // Verificar si el repositorio existe
-    fetch(`https://api.github.com/repos/${username}/${repo}`, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-        }
-    })
-    .then(response => {
-        if (response.ok) {
-            // Repositorio existe
-            alert('✅ ¡Configuración exitosa!\nLos datos se guardarán en GitHub.');
-            
-            // Ocultar botón de configuración
-            document.getElementById('btn-config-github').classList.add('hidden');
-            
-            // Recargar datos
-            loadAllData().then(() => {
-                if (currentUser === 'admin') {
-                    actualizarDashboard();
-                }
-            });
-            
-        } else if (response.status === 404) {
-            alert(`❌ El repositorio "${repo}" no existe en tu cuenta GitHub.\n\nPor favor:\n1. Ve a https://github.com/new\n2. Crea el repositorio "${repo}"\n3. Vuelve a configurar\n\nLos datos se guardarán en localStorage por ahora.`);
-        } else {
-            alert(`⚠️ Error: ${response.status} - ${response.statusText}\nVerifica tu token y usuario.\nLos datos se guardarán en localStorage.`);
-        }
-    })
-    .catch(error => {
-        alert(`❌ Error de conexión: ${error.message}\nLos datos se guardarán en localStorage.`);
-    });
-}
-        
-        document.getElementById('btn-logout').addEventListener('click', function() {
-            if (confirm('¿Está seguro que desea salir del sistema?')) {
-                // Limpiar usuario actual
-                localStorage.removeItem('currentUser');
-                location.reload();
+        // Probar conexión con GitHub
+        const conexionResponse = await fetch('https://api.github.com/user', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
             }
         });
+        
+        if (!conexionResponse.ok) {
+            throw new Error(`Token inválido o sin permisos: ${conexionResponse.status}`);
+        }
+        
+        const userData = await conexionResponse.json();
+        console.log('Usuario GitHub:', userData.login);
+        
+        // Verificar si el nombre de usuario coincide
+        if (userData.login.toLowerCase() !== username.toLowerCase()) {
+            const confirmar = confirm(`El token corresponde al usuario "${userData.login}", no a "${username}".\n\n¿Deseas usar "${userData.login}" como nombre de usuario?`);
+            if (confirmar) {
+                tempConfig.username = userData.login;
+            }
+        }
+        
+        // Verificar si el repositorio existe
+        const repoResponse = await fetch(
+            `https://api.github.com/repos/${tempConfig.username}/${repo}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            }
+        );
+        
+        let repositorioExiste = repoResponse.ok;
+        let mensajeRepositorio = '';
+        
+        if (!repositorioExiste && repoResponse.status === 404) {
+            // Repositorio no existe, preguntar si crearlo
+            const crear = confirm(`El repositorio "${repo}" no existe.\n\n¿Deseas crearlo automáticamente?`);
+            
+            if (crear) {
+                alert('🔄 Creando repositorio... Esto puede tomar unos segundos.');
+                
+                const crearResponse = await fetch('https://api.github.com/user/repos', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                        name: repo,
+                        description: 'Base de datos para retroalimentaciones',
+                        private: false,
+                        auto_init: true
+                    })
+                });
+                
+                if (crearResponse.ok || crearResponse.status === 201) {
+                    repositorioExiste = true;
+                    mensajeRepositorio = 'Repositorio creado exitosamente.';
+                } else {
+                    const errorData = await crearResponse.json();
+                    mensajeRepositorio = `No se pudo crear el repositorio: ${errorData.message || 'Error desconocido'}`;
+                }
+            } else {
+                mensajeRepositorio = 'Debes crear el repositorio manualmente en GitHub.com';
+            }
+        } else if (!repositorioExiste) {
+            const errorData = await repoResponse.json();
+            mensajeRepositorio = `Error accediendo al repositorio: ${errorData.message || 'Error desconocido'}`;
+        } else {
+            mensajeRepositorio = 'Repositorio verificado correctamente.';
+        }
+        
+        // Guardar configuración final
+        GITHUB_CONFIG.token = tempConfig.token;
+        GITHUB_CONFIG.username = tempConfig.username;
+        GITHUB_CONFIG.repo = repo;
+        
+        localStorage.setItem('github_config', JSON.stringify({
+            username: tempConfig.username,
+            token: tempConfig.token,
+            repo: repo
+        }));
+        
+        // Mostrar resultado
+        let mensajeFinal = `✅ Configuración guardada exitosamente.\n\n`;
+        mensajeFinal += `Usuario: ${tempConfig.username}\n`;
+        mensajeFinal += `Repositorio: ${repo}\n`;
+        mensajeFinal += `Estado: ${repositorioExiste ? 'Listo para usar' : 'Usando localStorage'}\n`;
+        mensajeFinal += mensajeRepositorio ? `\n${mensajeRepositorio}` : '';
+        
+        alert(mensajeFinal);
+        
+        // Ocultar sección de configuración
+        document.getElementById('github-config-section').classList.add('hidden');
+        document.getElementById('btn-config-github').classList.add('hidden');
+        
+        // Recargar datos
+        await loadAllData();
+        
+        if (currentUser === 'admin') {
+            actualizarDashboard();
+        }
+        
+    } catch (error) {
+        console.error('Error guardando configuración:', error);
+        
+        let mensajeError = `❌ Error en la configuración:\n\n${error.message}\n\n`;
+        
+        if (error.message.includes('token') || error.message.includes('401') || error.message.includes('403')) {
+            mensajeError += 'Posibles causas:\n';
+            mensajeError += '1. Token expirado o inválido\n';
+            mensajeError += '2. Token sin permisos suficientes\n';
+            mensajeError += '3. Nombre de usuario incorrecto\n\n';
+            mensajeError += 'Solución: Genera un nuevo token en GitHub con permisos "repo".';
+        }
+        
+        alert(mensajeError);
+        
+    } finally {
+        // Restaurar botón
+        document.getElementById('btn-save-github-config').innerHTML = '<i class="fas fa-save"></i> Guardar Configuración';
+        document.getElementById('btn-save-github-config').disabled = false;
+    }
+}
         
         // ============================================
         // FUNCIONES PRINCIPALES
