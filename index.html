@@ -1,0 +1,3263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Retroalimentación</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Tus estilos CSS se mantienen exactamente iguales */
+        :root {
+            --primary-color: #CF002E;
+            --secondary-color: #FDD000;
+            --gradient-start: #FFFFFF;
+            --gradient-end: #FDD000;
+            --light-gray: #f5f5f5;
+            --medium-gray: #e0e0e0;
+            --dark-gray: #333333;
+            --text-color: #333333;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            padding: 20px;
+            border-bottom: 3px solid var(--primary-color);
+            margin-bottom: 30px;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            background-color: var(--primary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .logo-text h1 {
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+        }
+        
+        .logo-text p {
+            font-weight: 300;
+            color: var(--dark-gray);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        /* Login */
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .login-container h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        /* Navegación */
+        .nav-tabs {
+            display: flex;
+            background-color: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+        }
+        
+        .nav-tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .nav-tab:hover {
+            background-color: var(--light-gray);
+        }
+        
+        .nav-tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            background-color: rgba(207, 0, 46, 0.05);
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        
+        /* Contenido principal */
+        .content {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Formularios */
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .form-section h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .required::after {
+            content: " *";
+            color: var(--primary-color);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(207, 0, 46, 0.1);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .radio-group, .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .radio-option, .checkbox-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .radio-option input, .checkbox-option input {
+            width: auto;
+            margin-top: 3px;
+        }
+        
+        /* Sección del colaborador */
+        .colaborador-section {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+        }
+        
+        .colaborador-section h4 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .colaborador-section .info-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+        
+        /* Subir imagen */
+        .image-upload {
+            border: 2px dashed var(--medium-gray);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .image-upload:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(207, 0, 46, 0.02);
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 15px;
+            border-radius: var(--border-radius);
+            display: none;
+        }
+        
+        /* Botones */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: flex-end;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #a00024;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: var(--dark-gray);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e6b800;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .btn-outline:hover {
+            background-color: rgba(207, 0, 46, 0.05);
+        }
+        
+        /* Firma digital - CORREGIDO */
+        .signature-container {
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .signature-canvas {
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            background-color: white;
+            width: 100%;
+            height: 150px;
+            margin-bottom: 15px;
+            cursor: crosshair;
+            touch-action: none;
+            display: block;
+        }
+        
+        .signature-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* Panel de administrador */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .admin-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .stat-info h3 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .stat-info p {
+            color: var(--dark-gray);
+            opacity: 0.8;
+        }
+        
+        /* Tabla */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            background-color: white;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1100px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+        
+        th {
+            background-color: var(--light-gray);
+            font-weight: 700;
+            color: var(--primary-color);
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background-color: rgba(253, 208, 0, 0.1);
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .badge-escrita {
+            background-color: #FDD000;
+            color: var(--dark-gray);
+        }
+        
+        .badge-verbal {
+            background-color: #CF002E;
+            color: white;
+        }
+        
+        /* Modal de edición */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--medium-gray);
+            padding-bottom: 15px;
+        }
+        
+        .modal-header h2 {
+            color: var(--primary-color);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--dark-gray);
+        }
+        
+        /* Alertas */
+        .alert {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Configuración */
+        .config-section {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .admin-controls {
+                flex-direction: column;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .button-group .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .admin-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .logo {
+                justify-content: center;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 20px auto;
+            }
+        }
+        
+        /* Modo solo formulario (sin admin) */
+        .public-mode .admin-only {
+            display: none !important;
+        }
+        
+        .public-mode header {
+            justify-content: center;
+        }
+        
+        .user-role {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: var(--secondary-color);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+        
+        .info-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .lider-otro-container {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-container">
+        <h2><i class="fas fa-lock"></i> Acceso al Sistema</h2>
+        <div class="form-group">
+            <label for="user-role">Tipo de usuario</label>
+            <select id="user-role" required>
+                <option value="">Seleccionar rol</option>
+                <option value="supervisor">Supervisor/Coordinador</option>
+                <option value="admin">Administrador</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="user-password">Contraseña</label>
+            <input type="password" id="user-password" placeholder="Ingrese su contraseña">
+        </div>
+        <div class="button-group">
+            <button type="button" class="btn btn-primary" id="btn-login">
+                <i class="fas fa-sign-in-alt"></i> Ingresar
+            </button>
+        </div>
+        <div id="login-error" class="alert alert-error hidden">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Credenciales incorrectas. Intente nuevamente.</span>
+        </div>
+        
+        <!-- Configuración solo para admin en login -->
+        <div class="config-section hidden" id="github-config-section">
+            <h3><i class="fab fa-github"></i> Configuración de GitHub</h3>
+            <p class="info-text">Solo el administrador necesita configurar esto para guardar datos en la nube.</p>
+            <div class="form-group">
+                <label for="github-username">Nombre de usuario de GitHub</label>
+                <input type="text" id="github-username" placeholder="Tu nombre de usuario">
+            </div>
+            <div class="form-group">
+                <label for="github-token">Token de acceso personal</label>
+                <input type="password" id="github-token" placeholder="Tu token de GitHub">
+                <p class="info-text">Crea un token en GitHub con permisos "repo"</p>
+            </div>
+            <div class="form-group">
+                <label for="github-repo">Nombre del repositorio</label>
+                <input type="text" id="github-repo" value="retroalimentacion-db">
+            </div>
+            <button type="button" class="btn btn-primary" id="btn-save-github-config">
+                <i class="fas fa-save"></i> Guardar Configuración
+            </button>
+        </div>
+    </div>
+
+    <!-- Aplicación Principal -->
+    <div id="app" class="hidden">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-comment-dots"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Formulario de Retroalimentación <span id="user-role-display" class="user-role"></span></h1>
+                    <p>Gestión de feedbacks</p>
+                </div>
+            </div>
+            <div class="button-group" style="margin: 0;">
+                <button class="btn btn-outline admin-only hidden" id="btn-config-github">
+                    <i class="fab fa-github"></i> Configurar GitHub
+                </button>
+                <button class="btn btn-outline" id="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            </div>
+        </header>
+        
+        <div class="container">
+            <!-- Navegación para supervisores -->
+            <div class="nav-tabs supervisor-only">
+                <div class="nav-tab active" data-tab="form-escrita">
+                    <i class="fas fa-edit"></i> Retroalimentación Escrita
+                </div>
+                <div class="nav-tab" data-tab="form-verbal">
+                    <i class="fas fa-comment"></i> Retroalimentación Verbal
+                </div>
+            </div>
+            
+            <!-- Navegación para admin -->
+            <div class="nav-tabs admin-only hidden">
+                <div class="nav-tab active" data-tab="admin">
+                    <i class="fas fa-chart-bar"></i> Panel Administrador
+                </div>
+            </div>
+            
+            <!-- Formulario de retroalimentación escrita -->
+            <div id="form-escrita" class="content supervisor-only">
+                <h2><i class="fas fa-edit"></i> Retroalimentación Escrita</h2>
+                <p>Complete el formulario para registrar una llamada de atención escrita.</p>
+                
+                <div id="escrita-success" class="alert alert-success hidden">
+                    <i class="fas fa-check-circle"></i>
+                    <span>¡Retroalimentación registrada exitosamente!</span>
+                </div>
+                
+                <form id="formEscrita">
+                    <div class="form-section">
+                        <h3><i class="fas fa-info-circle"></i> Información General</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="folio-escrita">Folio</label>
+                                <input type="text" id="folio-escrita" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="fecha-escrita">Fecha</label>
+                                <input type="date" id="fecha-escrita" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="required">Tipo de Feedback</label>
+                            <div class="radio-group">
+                                <div class="radio-option">
+                                    <input type="radio" id="motivacion" name="tipo-feedback-escrita" value="Motivación" checked>
+                                    <label for="motivacion">Motivación</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="desarrollo" name="tipo-feedback-escrita" value="Desarrollo">
+                                    <label for="desarrollo">Desarrollo</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="area" class="required">Área</label>
+                            <select id="area" required>
+                                <option value="">Seleccionar área</option>
+                                <option value="Operaciones">Operaciones</option>
+                                <option value="PFCT">PFCT</option>
+                                <option value="CRYD">CRYD</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group hidden" id="area-otro-container">
+                            <label for="area-otro" class="required">Especifique el área</label>
+                            <input type="text" id="area-otro" placeholder="Ingrese el nombre del área">
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-user-tie"></i> Información del Líder y Colaborador</h3>
+                        
+                        <div class="form-group">
+                            <label for="lider" class="required">Líder que retroalimenta</label>
+                            <select id="lider" required>
+                                <option value="">Seleccionar líder</option>
+                                <!-- Opciones se cargarán dinámicamente -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group hidden" id="lider-otro-container">
+                            <div class="lider-otro-container">
+                                <label for="lider-otro-nombre" class="required">Nombre completo del líder</label>
+                                <input type="text" id="lider-otro-nombre" placeholder="Nombre y apellidos del líder">
+                                
+                                <label for="lider-otro-puesto" class="required" style="margin-top: 10px;">Puesto del líder</label>
+                                <input type="text" id="lider-otro-puesto" placeholder="Ej: Supervisor, Coordinador, etc.">
+                                
+                                <label for="lider-otro-area" class="required" style="margin-top: 10px;">Área del líder</label>
+                                <input type="text" id="lider-otro-area" placeholder="Área o departamento del líder">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cuadrilla-colaborador" class="required">Cuadrilla del colaborador</label>
+                                <select id="cuadrilla-colaborador" required>
+                                    <option value="">Seleccionar cuadrilla</option>
+                                    <option value="Cuadrilla A">Cuadrilla A</option>
+                                    <option value="Cuadrilla B">Cuadrilla B</option>
+                                    <option value="Cuadrilla C">Cuadrilla C</option>
+                                    <option value="Cuadrilla D">Cuadrilla D</option>
+                                    <option value="Ninguna">Otra</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="num-empleado" class="required">Número de empleado</label>
+                                <input type="number" id="num-empleado" min="1000" max="999999" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Detalles de la Retroalimentación</h3>
+                        
+                        <div class="form-group">
+                            <label class="required">¿Qué impacto tiene la acción?</label>
+                            <p class="info-text">Seleccione uno o más tipos de impacto:</p>
+                            <div class="checkbox-group">
+                                <div class="checkbox-option">
+                                    <input type="checkbox" id="riesgo-seguridad" name="impacto" value="Riesgo por seguridad">
+                                    <label for="riesgo-seguridad">Riesgo por seguridad</label>
+                                </div>
+                                <div class="checkbox-option">
+                                    <input type="checkbox" id="riesgo-calidad" name="impacto" value="Riesgo por calidad">
+                                    <label for="riesgo-calidad">Riesgo por calidad</label>
+                                </div>
+                                <div class="checkbox-option">
+                                    <input type="checkbox" id="riesgo-inventario" name="impacto" value="Riesgo por inventario">
+                                    <label for="riesgo-inventario">Riesgo por inventario</label>
+                                </div>
+                                <div class="checkbox-option">
+                                    <input type="checkbox" id="riesgo-operativo" name="impacto" value="Riesgo operativo">
+                                    <label for="riesgo-operativo">Riesgo operativo</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="descripcion-impacto" class="required">Descripción detallada del impacto</label>
+                            <textarea id="descripcion-impacto" placeholder="Describa el impacto de la acción..." required></textarea>
+                        </div>
+                        
+                        <!-- SECCIÓN DEL COLABORADOR (solo visible cuando ingresa su número) -->
+                        <div class="colaborador-section hidden" id="seccion-colaborador">
+                            <h4><i class="fas fa-user-lock"></i> Sección del Colaborador</h4>
+                            <p class="info-text">Esta sección solo puede ser llenada por el colaborador.</p>
+                            
+                            <div class="form-group">
+                                <label class="required">¿Por qué cree que ocurre el problema?</label>
+                                <p class="info-text">Marque las opciones que apliquen:</p>
+                                <div class="checkbox-vertical">
+                                    <div class="checkbox-option">
+                                        <input type="checkbox" id="falta-capacitacion" name="causa-problema" value="Falta de capacitación">
+                                        <label for="falta-capacitacion">Falta de capacitación</label>
+                                    </div>
+                                    <div class="checkbox-option">
+                                        <input type="checkbox" id="falta-herramientas" name="causa-problema" value="Falta de herramientas">
+                                        <label for="falta-herramientas">Falta de herramientas</label>
+                                    </div>
+                                    <div class="checkbox-option">
+                                        <input type="checkbox" id="proceso-confuso" name="causa-problema" value="Proceso confuso">
+                                        <label for="proceso-confuso">Proceso confuso</label>
+                                    </div>
+                                    <div class="checkbox-option">
+                                        <input type="checkbox" id="sobrecarga-trabajo" name="causa-problema" value="Sobrecarga de trabajo">
+                                        <label for="sobrecarga-trabajo">Sobrecarga de trabajo</label>
+                                    </div>
+                                    <div class="checkbox-option">
+                                        <input type="checkbox" id="otra-causa" name="causa-problema" value="Otra">
+                                        <label for="otra-causa">Otra</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="explicacion-causa-colaborador">Explique brevemente</label>
+                                <textarea id="explicacion-causa-colaborador" placeholder="Explíquelo aquí..." rows="3"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="accion-diferente">¿Qué harías diferente dentro de tu proceso para prevenir errores similares?</label>
+                                <textarea id="accion-diferente" placeholder="¿Por qué cree que ocurrió este error? ¿Qué podría hacerse diferente?"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="compromiso" class="required">¿Cuál es el compromiso del colaborador?</label>
+                            <textarea id="compromiso" placeholder="Describa el compromiso..." required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-signature"></i> Firmas</h3>
+                        <p>Complete las firmas de todas las personas involucradas.</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group"> 
+                                <div class="signature-container">
+                                    <p>Firma del colaborador:</p>
+                                    <canvas class="signature-canvas" id="signature-canvas-colaborador"></canvas>
+                                    <div class="signature-controls">
+                                        <button type="button" class="btn btn-outline" id="clear-colaborador">
+                                            <i class="fas fa-eraser"></i> Limpiar
+                                        </button>
+                                        <span>Dibuje su firma arriba</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="signature-container">
+                                    <p>Firma del supervisor:</p>
+                                    <canvas class="signature-canvas" id="signature-canvas-supervisor"></canvas>
+                                    <div class="signature-controls">
+                                        <button type="button" class="btn btn-outline" id="clear-supervisor">
+                                            <i class="fas fa-eraser"></i> Limpiar
+                                        </button>
+                                        <span>Dibuje su firma arriba</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="signature-container">
+                                    <p>Firma del líder sindical:</p>
+                                    <canvas class="signature-canvas" id="signature-canvas-sindical"></canvas>
+                                    <div class="signature-controls">
+                                        <button type="button" class="btn btn-outline" id="clear-sindical">
+                                            <i class="fas fa-eraser"></i> Limpiar
+                                        </button>
+                                        <span>Dibuje su firma arriba</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="signature-container">
+                                    <p>Firma de recursos humanos:</p>
+                                    <canvas class="signature-canvas" id="signature-canvas-rh"></canvas>
+                                    <div class="signature-controls">
+                                        <button type="button" class="btn btn-outline" id="clear-rh">
+                                            <i class="fas fa-eraser"></i> Limpiar
+                                        </button>
+                                        <span>Dibuje su firma arriba</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="button" class="btn btn-outline" id="reset-escrita">
+                            <i class="fas fa-redo"></i> Limpiar Formulario
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Enviar Retroalimentación
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Formulario de retroalimentación verbal -->
+            <div id="form-verbal" class="content supervisor-only hidden">
+                <h2><i class="fas fa-comment"></i> Retroalimentación Verbal</h2>
+                <p>Complete el formulario para registrar una llamada de atención verbal.</p>
+                
+                <div id="verbal-success" class="alert alert-success hidden">
+                    <i class="fas fa-check-circle"></i>
+                    <span>¡Retroalimentación verbal registrada exitosamente!</span>
+                </div>
+                
+                <form id="formVerbal">
+                    <div class="form-section">
+                        <h3><i class="fas fa-info-circle"></i> Información General</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="folio-verbal">Folio</label>
+                                <input type="text" id="folio-verbal" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="fecha-verbal">Fecha</label>
+                                <input type="date" id="fecha-verbal" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-user-tie"></i> Información de Líder y Colaborador</h3>
+                        
+                        <div class="form-group">
+                            <label for="lider-verbal" class="required">Líder que retroalimenta</label>
+                            <select id="lider-verbal" required>
+                                <option value="">Seleccionar líder</option>
+                                <!-- Opciones se cargarán dinámicamente -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group hidden" id="lider-verbal-otro-container">
+                            <div class="lider-otro-container">
+                                <label for="lider-verbal-otro-nombre" class="required">Nombre completo del líder</label>
+                                <input type="text" id="lider-verbal-otro-nombre" placeholder="Nombre y apellidos del líder">
+                                
+                                <label for="lider-verbal-otro-puesto" class="required" style="margin-top: 10px;">Puesto del líder</label>
+                                <input type="text" id="lider-verbal-otro-puesto" placeholder="Ej: Supervisor, Coordinador, etc.">
+                                
+                                <label for="lider-verbal-otro-area" class="required" style="margin-top: 10px;">Área del líder</label>
+                                <input type="text" id="lider-verbal-otro-area" placeholder="Área o departamento del líder">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cuadrilla-verbal-colaborador" class="required">Cuadrilla del colaborador</label>
+                                <select id="cuadrilla-verbal-colaborador" required>
+                                    <option value="">Seleccionar cuadrilla</option>
+                                    <option value="Cuadrilla A">Cuadrilla A</option>
+                                    <option value="Cuadrilla B">Cuadrilla B</option>
+                                    <option value="Cuadrilla C">Cuadrilla C</option>
+                                    <option value="Cuadrilla D">Cuadrilla D</option>
+                                    <option value="Otra">Otra</option>
+                                    
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="num-empleado-verbal" class="required">Número de empleado</label>
+                                <input type="number" id="num-empleado-verbal" min="1000" max="999999" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-image"></i> Evidencia (Opcional)</h3>
+                        <p>Puede adjuntar una imagen relacionada con la retroalimentación verbal.</p>
+                        
+                        <div class="image-upload" id="image-upload-area">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: var(--medium-gray); margin-bottom: 15px;"></i>
+                            <p>Haga clic o arrastre una imagen aquí</p>
+                            <p><small>Formatos aceptados: JPG, PNG, GIF (Máx. 5MB)</small></p>
+                            <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                        </div>
+                        
+                        <img id="image-preview" class="image-preview" alt="Vista previa de la imagen">
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Detalles</h3>
+                        
+                        <div class="form-group">
+                            <label for="razon-verbal" class="required">Razón de retroalimentación</label>
+                            <textarea id="razon-verbal" placeholder="Describa la razón de la retroalimentación verbal..." required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-signature"></i> Firmas</h3>
+                        <p>Complete las firmas del colaborador y coordinador/supervisor.</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="signature-container">
+                                    <p>Firma del colaborador:</p>
+                                    <canvas class="signature-canvas" id="signature-canvas-verbal-colaborador"></canvas>
+                                    <div class="signature-controls">
+                                        <button type="button" class="btn btn-outline" id="clear-verbal-colaborador">
+                                            <i class="fas fa-eraser"></i> Limpiar
+                                        </button>
+                                        <span>Dibuje su firma arriba</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="signature-container">
+                                    <p>Firma del coordinador/supervisor:</p>
+                                    <canvas class="signature-canvas" id="signature-canvas-verbal-supervisor"></canvas>
+                                    <div class="signature-controls">
+                                        <button type="button" class="btn btn-outline" id="clear-verbal-supervisor">
+                                            <i class="fas fa-eraser"></i> Limpiar
+                                        </button>
+                                        <span>Dibuje su firma arriba</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="button" class="btn btn-outline" id="reset-verbal">
+                            <i class="fas fa-redo"></i> Limpiar Formulario
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Enviar Retroalimentación
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Panel de administrador -->
+            <div id="admin" class="content admin-only">
+                <div class="admin-header">
+                    <h2><i class="fas fa-chart-bar"></i> Panel de Administrador</h2>
+                    <div>
+                        <button class="btn btn-primary" id="refresh-data">
+                            <i class="fas fa-sync-alt"></i> Actualizar Datos
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="admin-controls">
+                    <button class="btn btn-primary" id="export-pdf">
+                        <i class="fas fa-file-pdf"></i> Exportar PDF
+                    </button>
+                    <button class="btn btn-secondary" id="export-excel">
+                        <i class="fas fa-file-excel"></i> Exportar Excel
+                    </button>
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <input type="date" id="filter-date">
+                    </div>
+                    <button class="btn btn-outline" id="filter-apply">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <button class="btn btn-outline" id="filter-clear">
+                        <i class="fas fa-times"></i> Limpiar Filtro
+                    </button>
+                </div>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-feedbacks">0</h3>
+                            <p>Total retroalimentaciones</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="escritas-count">0</h3>
+                            <p>Escritas</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-comment"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="verbales-count">0</h3>
+                            <p>Verbales</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="colaboradores-count">0</h3>
+                            <p>Colaboradores con feedback</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <h3 style="margin-bottom: 15px; padding: 15px 15px 0;">Retroalimentaciones Registradas</h3>
+                    <table id="feedbacks-table">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>N° Empleado</th>
+                                <th>Supervisor/Coordinador</th>
+                                <th>Área</th>
+                                <th>Cuadrilla</th>
+                                <th>Impacto</th>
+                                <th>Causas (Colaborador)</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feedbacks-tbody">
+                            <!-- Datos se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                    <div id="no-data-message" style="padding: 30px; text-align: center; color: #666; display: none;">
+                        <i class="fas fa-database" style="font-size: 48px; margin-bottom: 15px;"></i>
+                        <p>No hay retroalimentaciones registradas todavía.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar feedback -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Editar Retroalimentación</h2>
+                <button class="close-modal" id="close-edit-modal">&times;</button>
+            </div>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-folio">Folio</label>
+                        <input type="text" id="edit-folio" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-fecha">Fecha</label>
+                        <input type="date" id="edit-fecha">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-tipo">Tipo</label>
+                        <select id="edit-tipo">
+                            <option value="Escrita">Escrita</option>
+                            <option value="Verbal">Verbal</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-area">Área</label>
+                        <input type="text" id="edit-area">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-num-empleado">N° Empleado</label>
+                        <input type="number" id="edit-num-empleado">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-cuadrilla">Cuadrilla</label>
+                        <input type="text" id="edit-cuadrilla">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-impacto">Impacto</label>
+                    <textarea id="edit-impacto" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-causas">Causas identificadas por el colaborador</label>
+                    <textarea id="edit-causas" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-descripcion">Descripción</label>
+                    <textarea id="edit-descripcion" rows="4"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-compromiso">Compromiso</label>
+                    <textarea id="edit-compromiso" rows="3"></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button type="button" class="btn btn-outline" id="cancel-edit">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+        <!-- Modal para exportar PDF -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-pdf"></i> Exportar a PDF</h2>
+                <button class="close-modal" id="close-export-modal">&times;</button>
+            </div>
+            
+            <div class="form-section">
+                <h3><i class="fas fa-filter"></i> Opciones de Exportación</h3>
+                
+                <div class="form-group">
+                    <label class="required">¿Qué datos desea exportar?</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="export-all" name="export-option" value="all" checked>
+                            <label for="export-all">Todas las retroalimentaciones</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="export-selected" name="export-option" value="selected">
+                            <label for="export-selected">Seleccionar retroalimentaciones específicas</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group hidden" id="feedback-selection-container">
+                    <label>Seleccione las retroalimentaciones a exportar:</label>
+                    <div id="feedback-checklist" style="max-height: 300px; overflow-y: auto; margin-top: 10px; padding: 10px; border: 1px solid var(--medium-gray); border-radius: var(--border-radius);">
+                        <!-- Las opciones se llenarán dinámicamente -->
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button type="button" class="btn btn-outline" id="select-all-btn">
+                            <i class="fas fa-check-square"></i> Seleccionar todos
+                        </button>
+                        <button type="button" class="btn btn-outline" id="deselect-all-btn">
+                            <i class="fas fa-square"></i> Deseleccionar todos
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pdf-title">Título del reporte:</label>
+                    <input type="text" id="pdf-title" placeholder="Reporte de Retroalimentaciones" value="Reporte de Retroalimentaciones">
+                </div>
+                
+                <div class="form-group">
+                    <label for="pdf-notes">Notas adicionales (opcional):</label>
+                    <textarea id="pdf-notes" placeholder="Agregue notas adicionales para el reporte..." rows="3"></textarea>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" class="btn btn-outline" id="cancel-export">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="generate-pdf">
+                    <i class="fas fa-file-pdf"></i> Generar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURACIÓN INICIAL Y ESTADO DE LA APLICACIÓN
+        // ============================================
+        
+        // Credenciales de usuarios
+        const USERS = {
+            supervisor: { password: "sup123", name: "Supervisor" },
+            admin: { password: "admin123", name: "Administrador" }
+        };
+        
+        // Variables de estado
+        let currentUser = null;
+        let feedbacks = [];
+        let nextFolioEscrita = 1;
+        let nextFolioVerbal = 1;
+
+        // Configuración de GitHub para almacenamiento
+        const GITHUB_CONFIG = {
+            token: '',
+            repo: 'retroalimentacion-db',
+            username: '',
+            feedbackFile: 'feedbacks.json',
+            countersFile: 'counters.json'
+        };
+
+        // ============================================
+        // FUNCIONES DE ALMACENAMIENTO EN GITHUB
+        // ============================================
+
+        async function saveToGitHub(filename, data) {
+            try {
+                // Si no hay token configurado, usar localStorage
+                if (!GITHUB_CONFIG.token) {
+                    localStorage.setItem(filename, JSON.stringify(data));
+                    console.log('Saved to localStorage (GitHub not configured):', filename);
+                    return { success: true, source: 'localStorage' };
+                }
+                
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: `Update ${filename} at ${new Date().toISOString()}`,
+                        content: btoa(JSON.stringify(data, null, 2)),
+                        sha: await getFileSha(filename)
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                
+                console.log('Saved to GitHub:', filename);
+                return await response.json();
+            } catch (error) {
+                console.error('Error saving to GitHub:', error);
+                // Fallback a localStorage
+                localStorage.setItem(filename, JSON.stringify(data));
+                return { success: true, source: 'localStorage-fallback' };
+            }
+        }
+
+        async function loadFromGitHub(filename) {
+            try {
+                // Si no hay token configurado, usar localStorage
+                if (!GITHUB_CONFIG.token) {
+                    const localData = localStorage.getItem(filename);
+                    return localData ? JSON.parse(localData) : 
+                           (filename === GITHUB_CONFIG.feedbackFile ? [] : { 
+                               nextFolioEscrita: 1, 
+                               nextFolioVerbal: 1 
+                           });
+                }
+                
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    }
+                });
+                
+                if (response.status === 404) {
+                    // Archivo no existe, devolver datos por defecto
+                    console.log('File not found on GitHub, using defaults:', filename);
+                    return filename === GITHUB_CONFIG.feedbackFile ? [] : { 
+                        nextFolioEscrita: 1, 
+                        nextFolioVerbal: 1 
+                    };
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Loaded from GitHub:', filename);
+                return JSON.parse(atob(data.content));
+            } catch (error) {
+                console.error('Error loading from GitHub:', error);
+                // Fallback a localStorage
+                const localData = localStorage.getItem(filename);
+                return localData ? JSON.parse(localData) : 
+                       (filename === GITHUB_CONFIG.feedbackFile ? [] : { 
+                           nextFolioEscrita: 1, 
+                           nextFolioVerbal: 1 
+                       });
+            }
+        }
+
+        async function getFileSha(filename) {
+            try {
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filename}`, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    }
+                });
+                
+                if (response.status === 404) return null;
+                if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+                
+                const data = await response.json();
+                return data.sha;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        // Función para cargar todos los datos
+        async function loadAllData() {
+            try {
+                // Cargar configuración de GitHub primero
+                const savedConfig = localStorage.getItem('github_config');
+                if (savedConfig) {
+                    const config = JSON.parse(savedConfig);
+                    GITHUB_CONFIG.username = config.username;
+                    GITHUB_CONFIG.repo = config.repo;
+                    // El token no se guarda por seguridad, se pide al usuario
+                }
+                
+                const [loadedFeedbacks, counters] = await Promise.all([
+                    loadFromGitHub(GITHUB_CONFIG.feedbackFile),
+                    loadFromGitHub(GITHUB_CONFIG.countersFile)
+                ]);
+                
+                feedbacks = loadedFeedbacks;
+                nextFolioEscrita = counters.nextFolioEscrita || 1;
+                nextFolioVerbal = counters.nextFolioVerbal || 1;
+                
+                console.log(`Loaded ${feedbacks.length} feedbacks`);
+                return true;
+            } catch (error) {
+                console.error('Error loading data:', error);
+                return false;
+            }
+        }
+
+        // Función para guardar todos los datos
+        async function saveAllData() {
+            try {
+                const feedbacksPromise = saveToGitHub(GITHUB_CONFIG.feedbackFile, feedbacks);
+                const countersPromise = saveToGitHub(GITHUB_CONFIG.countersFile, {
+                    nextFolioEscrita: nextFolioEscrita,
+                    nextFolioVerbal: nextFolioVerbal
+                });
+                
+                await Promise.all([feedbacksPromise, countersPromise]);
+                console.log('All data saved');
+                return true;
+            } catch (error) {
+                console.error('Error saving data:', error);
+                return false;
+            }
+        }
+
+        // Función auxiliar para capturar firmas de los canvas
+        function capturarFirmas(formType = 'escrita') {
+            const firmas = {};
+            
+            // Función para verificar si el canvas tiene contenido
+            function canvasTieneContenido(canvas) {
+                if (!canvas) return false;
+                const ctx = canvas.getContext('2d');
+                const pixelBuffer = new Uint32Array(
+                    ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+                );
+                return pixelBuffer.some(color => color !== 0);
+            }
+            
+            if (formType === 'escrita') {
+                const canvasIds = [
+                    'signature-canvas-colaborador',
+                    'signature-canvas-supervisor',
+                    'signature-canvas-sindical',
+                    'signature-canvas-rh'
+                ];
+                
+                const nombres = ['colaborador', 'supervisor', 'sindical', 'rh'];
+                
+                canvasIds.forEach((canvasId, index) => {
+                    const canvas = document.getElementById(canvasId);
+                    if (canvas && canvasTieneContenido(canvas)) {
+                        firmas[nombres[index]] = canvas.toDataURL('image/png');
+                    }
+                });
+            } else if (formType === 'verbal') {
+                const canvasIds = [
+                    'signature-canvas-verbal-colaborador',
+                    'signature-canvas-verbal-supervisor'
+                ];
+                
+                const nombres = ['colaborador', 'supervisor'];
+                
+                canvasIds.forEach((canvasId, index) => {
+                    const canvas = document.getElementById(canvasId);
+                    if (canvas && canvasTieneContenido(canvas)) {
+                        firmas[nombres[index]] = canvas.toDataURL('image/png');
+                    }
+                });
+            }
+            
+            return firmas;
+        }
+        
+        // Líderes disponibles
+        const lideres = [
+            {id: "1042", nombre: "RODRIGUEZ ALAMILLA JUAN FELIX", rol: "SUPERVISOR", area: "C"},
+            {id: "1064", nombre: "CASTILLO RODRIGUEZ SERGIO", rol: "SUPERVISOR SENIOR", area: "C"},
+            {id: "1813", nombre: "VILLAGOMEZ RAMIREZ MARIO", rol: "SUPERVISOR", area: "D"},
+            {id: "3846", nombre: "BRIOSO PEREZ JESUS GUADALUPE", rol: "SUPERVISOR", area: "A"},
+            {id: "4497", nombre: "CORTEZ ACUÑA IGNACIO", rol: "SUPERVISOR SENIOR", area: "B"},
+            {id: "73313", nombre: "HERNANDEZ GARDUÑO CARLOS ADRIAN", rol: "GERENTE", area: "GERENCIA"}
+        ];
+        
+        // ============================================
+        // INICIALIZACIÓN DE LA APLICACIÓN
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Primero configurar los canvas
+            initializeAllCanvas();
+            
+            // Configurar event listeners básicos
+            setupBasicEventListeners();
+            
+            // Cargar datos
+            await loadAllData();
+            
+            // Configurar el resto
+            cargarLideres();
+            actualizarFechas();
+            
+            // Configurar event listeners completos
+            setupEventListeners();
+            
+            // Verificar si hay usuario logeado
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser && USERS[savedUser]) {
+                currentUser = savedUser;
+                showApp();
+                
+                // Mostrar rol del usuario
+                document.getElementById('user-role-display').textContent = USERS[currentUser].name;
+                
+                // Configurar interfaz según rol
+                if (currentUser === 'admin') {
+                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.add('hidden'));
+                    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                    showTab('admin');
+                    actualizarDashboard();
+                } else {
+                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+                    showTab('form-escrita');
+                }
+            }
+        });
+        
+        // ============================================
+        // FUNCIONES PARA CANVAS DE FIRMAS
+        // ============================================
+        
+        function initializeAllCanvas() {
+            // Configurar todos los canvas de firmas
+            const canvasConfigs = [
+                // Formulario escrito
+                {id: 'signature-canvas-colaborador', clearBtn: 'clear-colaborador'},
+                {id: 'signature-canvas-supervisor', clearBtn: 'clear-supervisor'},
+                {id: 'signature-canvas-sindical', clearBtn: 'clear-sindical'},
+                {id: 'signature-canvas-rh', clearBtn: 'clear-rh'},
+                // Formulario verbal
+                {id: 'signature-canvas-verbal-colaborador', clearBtn: 'clear-verbal-colaborador'},
+                {id: 'signature-canvas-verbal-supervisor', clearBtn: 'clear-verbal-supervisor'}
+            ];
+            
+            canvasConfigs.forEach(config => {
+                initializeCanvas(config.id, config.clearBtn);
+            });
+        }
+        
+        function initializeCanvas(canvasId, clearBtnId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) {
+                console.warn(`Canvas no encontrado: ${canvasId}`);
+                return;
+            }
+            
+            // Obtener contexto 2D
+            const ctx = canvas.getContext('2d');
+            
+            // Configurar tamaño del canvas
+            const updateCanvasSize = () => {
+                const parentWidth = canvas.parentElement.clientWidth;
+                canvas.width = parentWidth;
+                canvas.height = 150;
+                
+                // Limpiar y establecer fondo blanco
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = '#333333';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+            };
+            
+            // Actualizar tamaño inicial
+            updateCanvasSize();
+            
+            // Variables para el dibujo
+            let isDrawing = false;
+            let lastX = 0;
+            let lastY = 0;
+            
+            // Función para comenzar a dibujar
+            function startDrawing(e) {
+                isDrawing = true;
+                [lastX, lastY] = getCoordinates(e);
+            }
+            
+            // Función para dibujar
+            function draw(e) {
+                if (!isDrawing) return;
+                
+                const [x, y] = getCoordinates(e);
+                
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                [lastX, lastY] = [x, y];
+            }
+            
+            // Función para detener el dibujo
+            function stopDrawing() {
+                isDrawing = false;
+            }
+            
+            // Función para obtener coordenadas
+            function getCoordinates(e) {
+                let x, y;
+                
+                if (e.type.includes('mouse')) {
+                    x = e.offsetX;
+                    y = e.offsetY;
+                } else if (e.type.includes('touch')) {
+                    const rect = canvas.getBoundingClientRect();
+                    x = e.touches[0].clientX - rect.left;
+                    y = e.touches[0].clientY - rect.top;
+                }
+                
+                return [x, y];
+            }
+            
+            // Eventos de ratón
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Eventos táctiles
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startDrawing(e);
+            });
+            
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                draw(e);
+            });
+            
+            canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                stopDrawing();
+            });
+            
+            // Configurar botón limpiar
+            const clearBtn = document.getElementById(clearBtnId);
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = '#333333';
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                });
+            }
+            
+            // Actualizar tamaño cuando cambie el tamaño de la ventana
+            window.addEventListener('resize', updateCanvasSize);
+        }
+        
+        // ============================================
+        // AUTENTICACIÓN Y CONFIGURACIÓN
+        // ============================================
+        
+        function setupBasicEventListeners() {
+            document.getElementById('btn-login').addEventListener('click', handleLogin);
+            document.getElementById('user-password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('btn-login').click();
+                }
+            });
+        }
+        
+        async function handleLogin() {
+            const role = document.getElementById('user-role').value;
+            const password = document.getElementById('user-password').value;
+            const errorMsg = document.getElementById('login-error');
+            
+            if (!role || !password) {
+                errorMsg.querySelector('span').textContent = 'Por favor complete todos los campos';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+            
+            if (USERS[role] && USERS[role].password === password) {
+                // Login exitoso
+                currentUser = role;
+                
+                // Guardar en localStorage para persistencia
+                localStorage.setItem('currentUser', role);
+                
+                document.getElementById('login-screen').classList.add('hidden');
+                showApp();
+                
+                // Mostrar rol del usuario
+                document.getElementById('user-role-display').textContent = USERS[role].name;
+                
+                // Si es admin, mostrar sección de configuración si no está configurado
+                if (role === 'admin' && !GITHUB_CONFIG.token) {
+                    const configSection = document.getElementById('github-config-section');
+                    configSection.classList.remove('hidden');
+                }
+                
+                // Configurar botón de configuración de GitHub
+                document.getElementById('btn-config-github').addEventListener('click', () => {
+                    promptGitHubConfig();
+                });
+                
+                // Guardar configuración de GitHub
+                document.getElementById('btn-save-github-config').addEventListener('click', () => {
+                    saveGitHubConfig();
+                });
+                
+                // Configurar interfaz según rol
+                if (role === 'admin') {
+                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.add('hidden'));
+                    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                    showTab('admin');
+                    actualizarDashboard();
+                } else {
+                    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+                    showTab('form-escrita');
+                }
+            } else {
+                errorMsg.querySelector('span').textContent = 'Credenciales incorrectas. Intente nuevamente.';
+                errorMsg.classList.remove('hidden');
+                document.getElementById('user-password').value = '';
+                document.getElementById('user-password').focus();
+            }
+        }
+        
+        function saveGitHubConfig() {
+            const username = document.getElementById('github-username').value;
+            const token = document.getElementById('github-token').value;
+            const repo = document.getElementById('github-repo').value || 'retroalimentacion-db';
+            
+            if (!username || !token) {
+                alert('Por favor ingresa tu nombre de usuario y token de GitHub');
+                return;
+            }
+            
+            // Guardar configuración en variables
+            GITHUB_CONFIG.username = username;
+            GITHUB_CONFIG.token = token;
+            GITHUB_CONFIG.repo = repo;
+            
+            // Guardar en localStorage (sin el token por seguridad)
+            localStorage.setItem('github_config', JSON.stringify({
+                username: username,
+                repo: repo
+            }));
+            
+            alert('Configuración de GitHub guardada exitosamente. Los datos se guardarán en la nube.');
+            
+            // Ocultar sección de configuración
+            document.getElementById('github-config-section').classList.add('hidden');
+            
+            // Recargar datos desde GitHub
+            loadAllData().then(() => {
+                if (currentUser === 'admin') {
+                    actualizarDashboard();
+                }
+            });
+        }
+        
+        function promptGitHubConfig() {
+            const username = prompt('Ingresa tu nombre de usuario de GitHub:');
+            const token = prompt('Ingresa tu token de acceso personal de GitHub:');
+            const repo = prompt('Ingresa el nombre del repositorio (por defecto: retroalimentacion-db):', 'retroalimentacion-db');
+            
+            if (username && token) {
+                GITHUB_CONFIG.username = username;
+                GITHUB_CONFIG.token = token;
+                GITHUB_CONFIG.repo = repo || 'retroalimentacion-db';
+                
+                // Guardar configuración en localStorage (sin el token)
+                localStorage.setItem('github_config', JSON.stringify({
+                    username: username,
+                    repo: repo || 'retroalimentacion-db'
+                }));
+                
+                alert('Configuración guardada. Los datos se guardarán en la nube.');
+                
+                // Recargar datos
+                loadAllData().then(() => {
+                    if (currentUser === 'admin') {
+                        actualizarDashboard();
+                    }
+                });
+            } else {
+                alert('Configuración cancelada o incompleta');
+            }
+        }
+        
+        document.getElementById('btn-logout').addEventListener('click', function() {
+            if (confirm('¿Está seguro que desea salir del sistema?')) {
+                // Limpiar usuario actual
+                localStorage.removeItem('currentUser');
+                location.reload();
+            }
+        });
+        
+        // ============================================
+        // FUNCIONES PRINCIPALES
+        // ============================================
+        
+        function showApp() {
+            document.getElementById('app').classList.remove('hidden');
+        }
+        
+        function setupEventListeners() {
+            // Navegación entre pestañas
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    showTab(tabId);
+                });
+            });
+            
+            // Eventos de formulario escrito
+            document.getElementById('formEscrita').addEventListener('submit', submitFormEscrita);
+            document.getElementById('reset-escrita').addEventListener('click', resetFormEscrita);
+            
+            // Mostrar/ocultar sección del colaborador
+            document.getElementById('num-empleado').addEventListener('input', function() {
+                const seccionColaborador = document.getElementById('seccion-colaborador');
+                if (this.value) {
+                    seccionColaborador.classList.remove('hidden');
+                } else {
+                    seccionColaborador.classList.add('hidden');
+                }
+            });
+            
+            // Mostrar campo "Otro" para área
+            document.getElementById('area').addEventListener('change', function() {
+                const areaOtroContainer = document.getElementById('area-otro-container');
+                if (this.value === 'Otro') {
+                    areaOtroContainer.classList.remove('hidden');
+                    document.getElementById('area-otro').required = true;
+                } else {
+                    areaOtroContainer.classList.add('hidden');
+                    document.getElementById('area-otro').required = false;
+                }
+            });
+            
+            // Mostrar campo "Otro" para líder
+            document.getElementById('lider').addEventListener('change', function() {
+                const liderOtroContainer = document.getElementById('lider-otro-container');
+                if (this.value === 'otro') {
+                    liderOtroContainer.classList.remove('hidden');
+                    document.getElementById('lider-otro-nombre').required = true;
+                    document.getElementById('lider-otro-puesto').required = true;
+                    document.getElementById('lider-otro-area').required = true;
+                } else {
+                    liderOtroContainer.classList.add('hidden');
+                    document.getElementById('lider-otro-nombre').required = false;
+                    document.getElementById('lider-otro-puesto').required = false;
+                    document.getElementById('lider-otro-area').required = false;
+                }
+            });
+            
+            document.getElementById('lider-verbal').addEventListener('change', function() {
+                const liderVerbalOtroContainer = document.getElementById('lider-verbal-otro-container');
+                if (this.value === 'otro') {
+                    liderVerbalOtroContainer.classList.remove('hidden');
+                    document.getElementById('lider-verbal-otro-nombre').required = true;
+                    document.getElementById('lider-verbal-otro-puesto').required = true;
+                    document.getElementById('lider-verbal-otro-area').required = true;
+                } else {
+                    liderVerbalOtroContainer.classList.add('hidden');
+                    document.getElementById('lider-verbal-otro-nombre').required = false;
+                    document.getElementById('lider-verbal-otro-puesto').required = false;
+                    document.getElementById('lider-verbal-otro-area').required = false;
+                }
+            });
+            
+            // Eventos de formulario verbal
+            document.getElementById('formVerbal').addEventListener('submit', submitFormVerbal);
+            document.getElementById('reset-verbal').addEventListener('click', resetFormVerbal);
+            
+            // Subir imagen
+            document.getElementById('image-upload-area').addEventListener('click', function() {
+                document.getElementById('image-upload').click();
+            });
+            
+            document.getElementById('image-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('El archivo es demasiado grande. Máximo 5MB.');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.getElementById('image-preview');
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Eventos del panel admin
+            document.getElementById('export-pdf').addEventListener('click', openExportModal);
+            document.getElementById('export-excel').addEventListener('click', exportExcel);
+            document.getElementById('refresh-data').addEventListener('click', actualizarDashboard);
+            document.getElementById('filter-apply').addEventListener('click', aplicarFiltro);
+            document.getElementById('filter-clear').addEventListener('click', limpiarFiltro);
+            
+            // Eventos del modal de edición
+            document.getElementById('close-export-modal').addEventListener('click', closeExportModal);
+            document.getElementById('cancel-export').addEventListener('click', closeExportModal);
+            document.getElementById('generate-pdf').addEventListener('click', generatePDFWithOptions);
+            document.getElementById('close-edit-modal').addEventListener('click', closeEditModal);
+            document.getElementById('cancel-edit').addEventListener('click', closeEditModal);
+            document.getElementById('edit-form').addEventListener('submit', saveEdit);
+            
+            // Radio buttons para opciones de exportacion
+            document.querySelectorAll('input[name="export-option"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const selectionContainer = document.getElementById('feedback-selection-container');
+                    if (this.value === 'selected') {
+                        selectionContainer.classList.remove('hidden');
+                    } else {
+                        selectionContainer.classList.add('hidden');
+                    }
+                });
+            });
+            
+            // Botones para seleccionar/deseleccionar todos
+            document.getElementById('select-all-btn').addEventListener('click', function() {
+                document.querySelectorAll('.feedback-checkbox').forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+            });
+            
+            document.getElementById('deselect-all-btn').addEventListener('click', function() {
+                document.querySelectorAll('.feedback-checkbox').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            });
+        }
+        
+        function cargarLideres() {
+            const selectEscrito = document.getElementById('lider');
+            const selectVerbal = document.getElementById('lider-verbal');
+            
+            selectEscrito.innerHTML = '<option value="">Seleccionar líder</option>';
+            selectVerbal.innerHTML = '<option value="">Seleccionar líder</option>';
+            
+            lideres.forEach(lider => {
+                const option1 = document.createElement('option');
+                option1.value = lider.id;
+                option1.textContent = `${lider.nombre} - ${lider.rol} (${lider.area})`;
+                selectEscrito.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = lider.id;
+                option2.textContent = `${lider.nombre} - ${lider.rol} (${lider.area})`;
+                selectVerbal.appendChild(option2);
+            });
+            
+            // Agregar opción "Otro"
+            const otroOption1 = document.createElement('option');
+            otroOption1.value = 'otro';
+            otroOption1.textContent = 'Otro (especificar en los campos siguientes)';
+            selectEscrito.appendChild(otroOption1);
+            
+            const otroOption2 = document.createElement('option');
+            otroOption2.value = 'otro';
+            otroOption2.textContent = 'Otro (especificar en los campos siguientes)';
+            selectVerbal.appendChild(otroOption2);
+        }
+        
+        function generarFolio(tipo) {
+            const año = "2526";
+            
+            if (tipo === 'escrita') {
+                const numero = String(nextFolioEscrita).padStart(6, '0');
+                return `ESC-${año}-${numero}`;
+            } else {
+                const numero = String(nextFolioVerbal).padStart(6, '0');
+                return `VER-${año}-${numero}`;
+            }
+        }
+        
+        function actualizarFechas() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha-escrita').value = today;
+            document.getElementById('fecha-verbal').value = today;
+            document.getElementById('filter-date').value = today;
+            
+            // Generar folios
+            document.getElementById('folio-escrita').value = generarFolio('escrita');
+            document.getElementById('folio-verbal').value = generarFolio('verbal');
+        }
+        
+        // ============================================
+        // GESTIÓN DE PESTAÑAS
+        // ============================================
+        
+        function showTab(tabId) {
+            // Actualizar pestañas activas
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            const activeTab = document.querySelector(`.nav-tab[data-tab="${tabId}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+            
+            // Mostrar contenido correspondiente
+            document.querySelectorAll('.content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            // Re-inicializar canvas cuando se cambia de pestaña
+            setTimeout(() => {
+                initializeAllCanvas();
+            }, 100);
+        }
+        
+        // ============================================
+        // MANEJO DE FORMULARIOS
+        // ============================================
+        
+        async function submitFormEscrita(e) {
+            e.preventDefault();
+            
+            // Validar campos
+            const areaSelect = document.getElementById('area').value;
+            let area = areaSelect;
+            
+            if (areaSelect === 'Otro') {
+                area = document.getElementById('area-otro').value;
+                if (!area) {
+                    alert('Por favor especifique el área cuando selecciona "Otro"');
+                    return;
+                }
+            }
+            
+            const liderSelect = document.getElementById('lider').value;
+            let liderNombre = '';
+            let liderInfo = {};
+            
+            if (liderSelect === 'otro') {
+                const nombre = document.getElementById('lider-otro-nombre').value;
+                const puesto = document.getElementById('lider-otro-puesto').value;
+                const areaLider = document.getElementById('lider-otro-area').value;
+                
+                if (!nombre || !puesto || !areaLider) {
+                    alert('Por favor complete todos los campos del líder cuando selecciona "Otro"');
+                    return;
+                }
+                
+                liderNombre = `${nombre} - ${puesto} (${areaLider})`;
+                liderInfo = {
+                    id: 'otro',
+                    nombre: nombre,
+                    puesto: puesto,
+                    area: areaLider
+                };
+            } else {
+                const liderSeleccionado = lideres.find(l => l.id === liderSelect);
+                if (liderSeleccionado) {
+                    liderNombre = `${liderSeleccionado.nombre} - ${liderSeleccionado.rol} (${liderSeleccionado.area})`;
+                    liderInfo = liderSeleccionado;
+                }
+            }
+            
+            const cuadrilla = document.getElementById('cuadrilla-colaborador').value;
+            const numEmpleado = document.getElementById('num-empleado').value;
+            const descripcionImpacto = document.getElementById('descripcion-impacto').value;
+            const compromiso = document.getElementById('compromiso').value;
+            
+            // Validar checkboxes de impacto
+            const checkboxesImpacto = document.querySelectorAll('input[name="impacto"]:checked');
+            if (checkboxesImpacto.length === 0) {
+                alert('Por favor seleccione al menos un tipo de impacto');
+                return;
+            }
+            
+            // Obtener datos de la sección del colaborador (si existe)
+            let causas = [];
+            let explicacionCausa = '';
+            let accionDiferente = '';
+            
+            const seccionColaborador = document.getElementById('seccion-colaborador');
+            if (!seccionColaborador.classList.contains('hidden')) {
+                // Validar checkboxes de causa del colaborador
+                const checkboxesCausa = document.querySelectorAll('input[name="causa-problema"]:checked');
+                if (checkboxesCausa.length === 0) {
+                    alert('Por favor seleccione al menos una causa del problema en la sección del colaborador');
+                    return;
+                }
+                
+                causas = Array.from(checkboxesCausa).map(cb => cb.value);
+                explicacionCausa = document.getElementById('explicacion-causa-colaborador').value;
+                accionDiferente = document.getElementById('accion-diferente').value;
+            }
+            
+            if (!area || !liderSelect || !cuadrilla || !numEmpleado || !descripcionImpacto || !compromiso) {
+                alert('Por favor complete todos los campos requeridos (*)');
+                return;
+            }
+            
+            // CAPTURAR FIRMAS
+            const firmas = capturarFirmas('escrita');
+            
+            // Obtener tipos de impacto seleccionados
+            const impactos = Array.from(checkboxesImpacto).map(cb => cb.value);
+            
+            // Obtener datos del formulario
+            const feedback = {
+                id: Date.now(),
+                folio: document.getElementById('folio-escrita').value,
+                fecha: document.getElementById('fecha-escrita').value,
+                tipo: 'Escrita',
+                subtipo: document.querySelector('input[name="tipo-feedback-escrita"]:checked').value,
+                area,
+                liderId: liderSelect,
+                liderNombre: liderNombre,
+                liderInfo: liderInfo,
+                cuadrillaColaborador: cuadrilla,
+                numEmpleado,
+                impactos: impactos,
+                descripcionImpacto,
+                causas: causas,
+                explicacionCausa: explicacionCausa,
+                accionDiferente: accionDiferente,
+                compromiso,
+                firmas: firmas,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Guardar en almacenamiento
+            feedbacks.push(feedback);
+            nextFolioEscrita++;
+            
+            // Guardar en GitHub o localStorage
+            const saved = await saveAllData();
+            
+            if (saved) {
+                // Mostrar mensaje de éxito
+                const successMsg = document.getElementById('escrita-success');
+                successMsg.classList.remove('hidden');
+                
+                // Ocultar mensaje después de 5 segundos
+                setTimeout(() => {
+                    successMsg.classList.add('hidden');
+                }, 5000);
+                
+                // Resetear formulario
+                resetFormEscrita();
+                
+                // Si es admin, actualizar dashboard
+                if (currentUser === 'admin') {
+                    actualizarDashboard();
+                }
+            } else {
+                alert('Error al guardar los datos. Intente nuevamente.');
+            }
+        }
+        
+        async function submitFormVerbal(e) {
+            e.preventDefault();
+            
+            // Validar campo de líder
+            const liderSelect = document.getElementById('lider-verbal').value;
+            let liderNombre = '';
+            let liderInfo = {};
+            
+            if (liderSelect === 'otro') {
+                const nombre = document.getElementById('lider-verbal-otro-nombre').value;
+                const puesto = document.getElementById('lider-verbal-otro-puesto').value;
+                const areaLider = document.getElementById('lider-verbal-otro-area').value;
+                
+                if (!nombre || !puesto || !areaLider) {
+                    alert('Por favor complete todos los campos del líder cuando selecciona "Otro"');
+                    return;
+                }
+                
+                liderNombre = `${nombre} - ${puesto} (${areaLider})`;
+                liderInfo = {
+                    id: 'otro',
+                    nombre: nombre,
+                    puesto: puesto,
+                    area: areaLider
+                };
+            } else {
+                const liderSeleccionado = lideres.find(l => l.id === liderSelect);
+                if (liderSeleccionado) {
+                    liderNombre = `${liderSeleccionado.nombre} - ${liderSeleccionado.rol} (${liderSeleccionado.area})`;
+                    liderInfo = liderSeleccionado;
+                }
+            }
+            
+            const cuadrilla = document.getElementById('cuadrilla-verbal-colaborador').value;
+            const numEmpleado = document.getElementById('num-empleado-verbal').value;
+            const razon = document.getElementById('razon-verbal').value;
+            
+            if (!liderSelect || !cuadrilla || !numEmpleado || !razon) {
+                alert('Por favor complete todos los campos requeridos (*)');
+                return;
+            }
+            
+            // Obtener imagen si existe
+            let imagenBase64 = null;
+            const preview = document.getElementById('image-preview');
+            if (preview.style.display === 'block') {
+                imagenBase64 = preview.src;
+            }
+            
+            // CAPTURAR FIRMAS
+            const firmas = capturarFirmas('verbal');
+            
+            // Obtener datos del formulario
+            const feedback = {
+                id: Date.now(),
+                folio: document.getElementById('folio-verbal').value,
+                fecha: document.getElementById('fecha-verbal').value,
+                tipo: 'Verbal',
+                liderId: liderSelect,
+                liderNombre: liderNombre,
+                liderInfo: liderInfo,
+                cuadrillaColaborador: cuadrilla,
+                numEmpleado,
+                razon,
+                imagen: imagenBase64,
+                firmas: firmas,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Guardar en almacenamiento
+            feedbacks.push(feedback);
+            nextFolioVerbal++;
+            
+            // Guardar en GitHub o localStorage
+            const saved = await saveAllData();
+            
+            if (saved) {
+                // Mostrar mensaje de éxito
+                const successMsg = document.getElementById('verbal-success');
+                successMsg.classList.remove('hidden');
+                
+                // Ocultar mensaje después de 5 segundos
+                setTimeout(() => {
+                    successMsg.classList.add('hidden');
+                }, 5000);
+                
+                // Resetear formulario
+                resetFormVerbal();
+                
+                // Si es admin, actualizar dashboard
+                if (currentUser === 'admin') {
+                    actualizarDashboard();
+                }
+            } else {
+                alert('Error al guardar los datos. Intente nuevamente.');
+            }
+        }
+        
+        function resetFormEscrita() {
+            document.getElementById('formEscrita').reset();
+            document.getElementById('seccion-colaborador').classList.add('hidden');
+            document.getElementById('area-otro-container').classList.add('hidden');
+            document.getElementById('area-otro').required = false;
+            document.getElementById('lider-otro-container').classList.add('hidden');
+            document.getElementById('lider-otro-nombre').required = false;
+            document.getElementById('lider-otro-puesto').required = false;
+            document.getElementById('lider-otro-area').required = false;
+            
+            actualizarFechas();
+            
+            // Limpiar canvas
+            const canvases = ['signature-canvas-colaborador', 'signature-canvas-supervisor', 
+                            'signature-canvas-sindical', 'signature-canvas-rh'];
+            canvases.forEach(canvasId => {
+                const canvas = document.getElementById(canvasId);
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = '#333333';
+                }
+            });
+        }
+        
+        function resetFormVerbal() {
+            document.getElementById('formVerbal').reset();
+            document.getElementById('image-preview').style.display = 'none';
+            document.getElementById('lider-verbal-otro-container').classList.add('hidden');
+            document.getElementById('lider-verbal-otro-nombre').required = false;
+            document.getElementById('lider-verbal-otro-puesto').required = false;
+            document.getElementById('lider-verbal-otro-area').required = false;
+            
+            actualizarFechas();
+            
+            // Limpiar canvas
+            const canvases = ['signature-canvas-verbal-colaborador', 'signature-canvas-verbal-supervisor'];
+            canvases.forEach(canvasId => {
+                const canvas = document.getElementById(canvasId);
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = '#333333';
+                }
+            });
+        }
+        
+        // ============================================
+        // PANEL DE ADMINISTRADOR
+        // ============================================
+        
+        function actualizarDashboard() {
+            const total = feedbacks.length;
+            const escritas = feedbacks.filter(f => f.tipo === 'Escrita').length;
+            const verbales = feedbacks.filter(f => f.tipo === 'Verbal').length;
+            
+            // Contar colaboradores únicos
+            const colaboradoresUnicos = new Set(
+                feedbacks.filter(f => f.numEmpleado).map(f => f.numEmpleado)
+            ).size;
+            
+            // Actualizar estadísticas
+            document.getElementById('total-feedbacks').textContent = total;
+            document.getElementById('escritas-count').textContent = escritas;
+            document.getElementById('verbales-count').textContent = verbales;
+            document.getElementById('colaboradores-count').textContent = colaboradoresUnicos;
+            
+            // Actualizar tabla
+            actualizarTablaFeedbacks();
+        }
+        
+        function actualizarTablaFeedbacks(filtroFecha = null) {
+            const tbody = document.getElementById('feedbacks-tbody');
+            const noDataMsg = document.getElementById('no-data-message');
+            
+            tbody.innerHTML = '';
+            
+            let feedbacksFiltrados = feedbacks;
+            
+            if (filtroFecha) {
+                feedbacksFiltrados = feedbacks.filter(f => f.fecha === filtroFecha);
+            }
+            
+            if (feedbacksFiltrados.length === 0) {
+                noDataMsg.style.display = 'block';
+                tbody.style.display = 'none';
+                return;
+            }
+            
+            noDataMsg.style.display = 'none';
+            tbody.style.display = '';
+            
+            // Ordenar por fecha más reciente
+            feedbacksFiltrados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            feedbacksFiltrados.forEach(feedback => {
+                const row = document.createElement('tr');
+                
+                // Folio
+                const tdFolio = document.createElement('td');
+                tdFolio.textContent = feedback.folio;
+                row.appendChild(tdFolio);
+                
+                // Fecha
+                const tdFecha = document.createElement('td');
+                tdFecha.textContent = feedback.fecha;
+                row.appendChild(tdFecha);
+                
+                // Tipo
+                const tdTipo = document.createElement('td');
+                if (feedback.tipo === 'Escrita') {
+                    tdTipo.innerHTML = `<span class="badge badge-escrita">${feedback.tipo} (${feedback.subtipo})</span>`;
+                } else {
+                    tdTipo.innerHTML = `<span class="badge badge-verbal">${feedback.tipo}</span>`;
+                }
+                row.appendChild(tdTipo);
+                
+                // Número de empleado
+                const tdEmpleado = document.createElement('td');
+                tdEmpleado.textContent = feedback.numEmpleado || 'N/A';
+                row.appendChild(tdEmpleado);
+                
+                // Supervisor
+                const tdSupervisor = document.createElement('td');
+                tdSupervisor.textContent = feedback.liderNombre ? 
+                    feedback.liderNombre.split(' - ')[0] : 
+                    'N/A';
+                row.appendChild(tdSupervisor);
+                
+                // Área
+                const tdArea = document.createElement('td');
+                tdArea.textContent = feedback.area || 'N/A';
+                row.appendChild(tdArea);
+                
+                // Cuadrilla
+                const tdCuadrilla = document.createElement('td');
+                tdCuadrilla.textContent = feedback.cuadrillaColaborador || 'N/A';
+                row.appendChild(tdCuadrilla);
+                
+                // Impacto
+                const tdImpacto = document.createElement('td');
+                if (feedback.impactos) {
+                    tdImpacto.textContent = feedback.impactos.join(', ');
+                } else {
+                    tdImpacto.textContent = feedback.razon ? 'Verbal' : 'N/A';
+                }
+                row.appendChild(tdImpacto);
+                
+                // Causas (solo para retroalimentación escrita)
+                const tdCausas = document.createElement('td');
+                if (feedback.causas && feedback.causas.length > 0) {
+                    tdCausas.textContent = feedback.causas.join(', ');
+                } else {
+                    tdCausas.textContent = 'N/A';
+                }
+                row.appendChild(tdCausas);
+                
+                // Acciones
+                const tdAcciones = document.createElement('td');
+                
+                const btnVer = document.createElement('button');
+                btnVer.className = 'btn btn-outline';
+                btnVer.style.cssText = 'padding: 5px 10px; font-size: 14px;';
+                btnVer.innerHTML = '<i class="fas fa-eye"></i>';
+                btnVer.title = 'Ver detalles';
+                btnVer.addEventListener('click', () => verFeedback(feedback.id));
+                
+                const btnEditar = document.createElement('button');
+                btnEditar.className = 'btn btn-outline';
+                btnEditar.style.cssText = 'padding: 5px 10px; font-size: 14px; margin-left: 5px;';
+                btnEditar.innerHTML = '<i class="fas fa-edit"></i>';
+                btnEditar.title = 'Editar';
+                btnEditar.addEventListener('click', () => abrirModalEdicion(feedback.id));
+                
+                const btnEliminar = document.createElement('button');
+                btnEliminar.className = 'btn btn-outline';
+                btnEliminar.style.cssText = 'padding: 5px 10px; font-size: 14px; margin-left: 5px;';
+                btnEliminar.innerHTML = '<i class="fas fa-trash"></i>';
+                btnEliminar.title = 'Eliminar';
+                btnEliminar.addEventListener('click', () => eliminarFeedback(feedback.id));
+                
+                tdAcciones.appendChild(btnVer);
+                tdAcciones.appendChild(btnEditar);
+                tdAcciones.appendChild(btnEliminar);
+                row.appendChild(tdAcciones);
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        function verFeedback(id) {
+            const feedback = feedbacks.find(f => f.id === id);
+            if (!feedback) return;
+            
+            let detalles = `=== DETALLES DE RETROALIMENTACIÓN ===\n\n`;
+            detalles += `Folio: ${feedback.folio}\n`;
+            detalles += `Fecha: ${feedback.fecha}\n`;
+            detalles += `Tipo: ${feedback.tipo}\n`;
+            
+            if (feedback.tipo === 'Escrita') {
+                detalles += `Subtipo: ${feedback.subtipo}\n`;
+                detalles += `Área: ${feedback.area}\n`;
+                detalles += `Supervisor: ${feedback.liderNombre}\n`;
+                detalles += `N° Empleado: ${feedback.numEmpleado}\n`;
+                detalles += `Cuadrilla: ${feedback.cuadrillaColaborador}\n`;
+                detalles += `\nImpactos identificados:\n`;
+                detalles += feedback.impactos ? `- ${feedback.impactos.join('\n- ')}\n` : 'N/A\n';
+                detalles += `\nDescripción del impacto:\n${feedback.descripcionImpacto}\n`;
+                
+                if (feedback.causas && feedback.causas.length > 0) {
+                    detalles += `\nCausas identificadas por el colaborador:\n`;
+                    detalles += `- ${feedback.causas.join('\n- ')}\n`;
+                    
+                    if (feedback.explicacionCausa) {
+                        detalles += `\nExplicación adicional del colaborador:\n${feedback.explicacionCausa}\n`;
+                    }
+                }
+                
+                if (feedback.accionDiferente) {
+                    detalles += `\nAcción diferente sugerida por el colaborador:\n${feedback.accionDiferente}\n`;
+                }
+                
+                detalles += `\nCompromiso del colaborador:\n${feedback.compromiso}\n`;
+            } else {
+                detalles += `\nSupervisor: ${feedback.liderNombre}\n`;
+                detalles += `N° Empleado: ${feedback.numEmpleado}\n`;
+                detalles += `Cuadrilla: ${feedback.cuadrillaColaborador}\n`;
+                detalles += `\nRazón:\n${feedback.razon}\n`;
+                if (feedback.imagen) {
+                    detalles += `\n(Incluye imagen adjunta)\n`;
+                }
+            }
+            
+            detalles += `\nRegistrado el: ${new Date(feedback.timestamp).toLocaleString()}`;
+            
+            alert(detalles);
+        }
+        
+        function abrirModalEdicion(id) {
+            const feedback = feedbacks.find(f => f.id === id);
+            if (!feedback) return;
+            
+            // Llenar formulario de edición
+            document.getElementById('edit-id').value = feedback.id;
+            document.getElementById('edit-folio').value = feedback.folio;
+            document.getElementById('edit-fecha').value = feedback.fecha;
+            document.getElementById('edit-tipo').value = feedback.tipo;
+            document.getElementById('edit-area').value = feedback.area || '';
+            document.getElementById('edit-num-empleado').value = feedback.numEmpleado || '';
+            document.getElementById('edit-cuadrilla').value = feedback.cuadrillaColaborador || '';
+            
+            if (feedback.impactos) {
+                document.getElementById('edit-impacto').value = feedback.impactos.join(', ');
+            } else {
+                document.getElementById('edit-impacto').value = '';
+            }
+            
+            if (feedback.causas) {
+                document.getElementById('edit-causas').value = feedback.causas.join(', ');
+            } else {
+                document.getElementById('edit-causas').value = '';
+            }
+            
+            document.getElementById('edit-descripcion').value = 
+                feedback.descripcionImpacto || feedback.razon || '';
+            document.getElementById('edit-compromiso').value = feedback.compromiso || '';
+            
+            // Mostrar modal
+            document.getElementById('edit-modal').style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+            document.getElementById('edit-form').reset();
+        }
+        
+        async function saveEdit(e) {
+            e.preventDefault();
+            
+            const id = parseInt(document.getElementById('edit-id').value);
+            const index = feedbacks.findIndex(f => f.id === id);
+            
+            if (index === -1) return;
+            
+            // Actualizar feedback
+            feedbacks[index] = {
+                ...feedbacks[index],
+                fecha: document.getElementById('edit-fecha').value,
+                area: document.getElementById('edit-area').value,
+                numEmpleado: document.getElementById('edit-num-empleado').value,
+                cuadrillaColaborador: document.getElementById('edit-cuadrilla').value,
+                descripcionImpacto: document.getElementById('edit-descripcion').value || feedbacks[index].descripcionImpacto,
+                compromiso: document.getElementById('edit-compromiso').value || feedbacks[index].compromiso
+            };
+            
+            // Guardar cambios
+            const saved = await saveAllData();
+            
+            if (saved) {
+                // Actualizar tabla
+                actualizarTablaFeedbacks();
+                
+                // Cerrar modal
+                closeEditModal();
+                
+                alert('Cambios guardados exitosamente');
+            } else {
+                alert('Error al guardar los cambios');
+            }
+        }
+        
+        async function eliminarFeedback(id) {
+            if (!confirm('¿Está seguro que desea eliminar esta retroalimentación?')) {
+                return;
+            }
+            
+            feedbacks = feedbacks.filter(f => f.id !== id);
+            const saved = await saveAllData();
+            
+            if (saved) {
+                actualizarDashboard();
+                alert('Retroalimentación eliminada exitosamente');
+            } else {
+                alert('Error al eliminar la retroalimentación');
+            }
+        }
+        
+        function aplicarFiltro() {
+            const fecha = document.getElementById('filter-date').value;
+            if (!fecha) {
+                alert('Por favor seleccione una fecha');
+                return;
+            }
+            
+            actualizarTablaFeedbacks(fecha);
+        }
+        
+        function limpiarFiltro() {
+            document.getElementById('filter-date').value = new Date().toISOString().split('T')[0];
+            actualizarTablaFeedbacks();
+        }
+        
+        // ============================================
+        // EXPORTACIÓN DE DATOS
+        // ============================================
+
+        function exportExcel() {
+            if (feedbacks.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            // Crear objeto para contar retroalimentaciones por empleado con estadisticas detalladas
+            const empleadosMap = new Map();
+            
+            feedbacks.forEach(feedback => {
+                const numEmpleado = feedback.numEmpleado || 'N/A';
+                
+                if (!empleadosMap.has(numEmpleado)) {
+                    empleadosMap.set(numEmpleado, {
+                        numEmpleado: numEmpleado,
+                        nombreEmpleado: 'N/A',
+                        totalFeedback: 0,
+                        escritasMotivacion: 0,
+                        escritasDesarrollo: 0,
+                        verbales: 0,
+                        supervisores: new Set(),
+                        cuadrillaColaborador: '',
+                        cuadrillaSupervisor: '',
+                        fechas: new Set()
+                    });
+                }
+                
+                const empleado = empleadosMap.get(numEmpleado);
+                empleado.totalFeedback++;
+                empleado.fechas.add(feedback.fecha);
+                
+                // Contar tipos especificos
+                if (feedback.tipo === 'Escrita') {
+                    if (feedback.subtipo === 'Motivación') {
+                        empleado.escritasMotivacion++;
+                    } else if (feedback.subtipo === 'Desarrollo') {
+                        empleado.escritasDesarrollo++;
+                    }
+                } else if (feedback.tipo === 'Verbal') {
+                    empleado.verbales++;
+                }
+                
+                // Agregar supervisor
+                if (feedback.liderNombre) {
+                    const nombreSupervisor = feedback.liderNombre.split(' - ')[0];
+                    empleado.supervisores.add(nombreSupervisor);
+                }
+                
+                // Agregar cuadrilla del colaborador
+                if (feedback.cuadrillaColaborador) {
+                    empleado.cuadrillaColaborador = feedback.cuadrillaColaborador;
+                }
+                
+                // Determinar cuadrilla del supervisor (basado en area)
+                if (feedback.liderInfo && feedback.liderInfo.area) {
+                    empleado.cuadrillaSupervisor = feedback.liderInfo.area;
+                }
+            });
+            
+            // Convertir a array para exportar
+            const datosExportar = Array.from(empleadosMap.values()).map(empleado => ({
+                'N. Empleado': empleado.numEmpleado,
+                'Nombre Empleado': empleado.nombreEmpleado,
+                'Total Feedback': empleado.totalFeedback,
+                'Escritas Motivacion': empleado.escritasMotivacion,
+                'Escritas Desarrollo': empleado.escritasDesarrollo,
+                'Verbales': empleado.verbales,
+                'Coordinador/Supervisor': Array.from(empleado.supervisores).join(', '),
+                'Cuadrilla Colaborador': empleado.cuadrillaColaborador,
+                'Cuadrilla Coordinador': empleado.cuadrillaSupervisor,
+                
+            }));
+            
+            // Crear contenido CSV sin acentos y con nombres de columnas simples
+            let csvContent = "N. Empleado,Nombre Empleado,Total Feedback,Escritas Motivacion,Escritas Desarrollo,Verbales,Coordinador/Supervisor,Cuadrilla Colaborador,Cuadrilla Coordinador\n";
+            
+            datosExportar.forEach(empleado => {
+                const row = [
+                    empleado['N. Empleado'],
+                    `"${empleado['Nombre Empleado']}"`,
+                    empleado['Total Feedback'],
+                    empleado['Escritas Motivacion'],
+                    empleado['Escritas Desarrollo'],
+                    empleado['Verbales'],
+                    `"${empleado['Coordinador/Supervisor']}"`,
+                    empleado['Cuadrilla Colaborador'],
+                    empleado['Cuadrilla Coordinador'],
+                ];
+                
+                csvContent += row.join(',') + '\n';
+            });
+            
+            // Crear hoja adicional con estadisticas generales
+            let statsContent = "ESTADISTICAS GENERALES\n\n";
+            statsContent += "Metrica,Valor\n";
+            statsContent += `Total Empleados con Feedback,${datosExportar.length}\n`;
+            
+            const totalFeedbacks = datosExportar.reduce((sum, emp) => sum + emp['Total Feedback'], 0);
+            const totalMotivacion = datosExportar.reduce((sum, emp) => sum + emp['Escritas Motivacion'], 0);
+            const totalDesarrollo = datosExportar.reduce((sum, emp) => sum + emp['Escritas Desarrollo'], 0);
+            const totalVerbales = datosExportar.reduce((sum, emp) => sum + emp['Verbales'], 0);
+            
+            statsContent += `Total Retroalimentaciones,${totalFeedbacks}\n`;
+            statsContent += `Escritas Motivacion,${totalMotivacion}\n`;
+            statsContent += `Escritas Desarrollo,${totalDesarrollo}\n`;
+            statsContent += `Verbales,${totalVerbales}\n`;
+            
+            if (totalFeedbacks > 0) {
+                statsContent += `% Motivacion,${((totalMotivacion / totalFeedbacks) * 100).toFixed(2)}%\n`;
+                statsContent += `% Desarrollo,${((totalDesarrollo / totalFeedbacks) * 100).toFixed(2)}%\n`;
+                statsContent += `% Verbales,${((totalVerbales / totalFeedbacks) * 100).toFixed(2)}%\n`;
+            }
+            
+            // Combinar ambos contenidos
+            const combinedContent = csvContent + "\n\n" + statsContent;
+            
+            // Crear y descargar archivo
+            const fecha = new Date().toISOString().split('T')[0];
+            const filename = `resumen_retroalimentaciones_${fecha}.csv`;
+            
+            const blob = new Blob([combinedContent], { type: 'text/csv;charset=utf-8;' });
+            
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert(`Se ha generado el archivo Excel con ${datosExportar.length} registros de empleados y estadisticas detalladas.`);
+        }
+
+        function openExportModal() {
+            // Llenar lista de retroalimentaciones
+            const checklist = document.getElementById('feedback-checklist');
+            checklist.innerHTML = '';
+            
+            // Ordenar feedbacks por fecha (más reciente primero) para el checklist
+            const feedbacksOrdenados = [...feedbacks].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            feedbacksOrdenados.forEach((feedback, index) => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-option';
+                div.style.marginBottom = '5px';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `feedback-${feedback.id}`;
+                checkbox.value = feedback.id;
+                checkbox.checked = true;
+                checkbox.className = 'feedback-checkbox';
+                
+                const label = document.createElement('label');
+                label.htmlFor = `feedback-${feedback.id}`;
+                label.textContent = `${feedback.folio} - ${feedback.tipo} - ${feedback.fecha}`;
+                
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                checklist.appendChild(div);
+            });
+            
+            // Mostrar modal
+            document.getElementById('export-modal').style.display = 'block';
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').style.display = 'none';
+        }
+
+        function generatePDFWithOptions() {
+            const exportOption = document.querySelector('input[name="export-option"]:checked').value;
+            let feedbacksToExport = [];
+            
+            if (exportOption === 'all') {
+                feedbacksToExport = [...feedbacks];
+            } else {
+                const selectedCheckboxes = document.querySelectorAll('.feedback-checkbox:checked');
+                if (selectedCheckboxes.length === 0) {
+                    alert('Por favor seleccione al menos una retroalimentación para exportar');
+                    return;
+                }
+                
+                const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+                feedbacksToExport = feedbacks.filter(f => selectedIds.includes(f.id));
+            }
+            
+            const pdfTitle = document.getElementById('pdf-title').value || 'Reporte de Retroalimentaciones';
+            const pdfNotes = document.getElementById('pdf-notes').value;
+            
+            // Generar PDF con las retroalimentaciones seleccionadas
+            generatePDF(feedbacksToExport, pdfTitle, pdfNotes);
+            closeExportModal();
+        }
+
+        function generatePDF(feedbacksToExport, title, notes) {
+            if (feedbacksToExport.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            // Ordenar feedbacks por fecha (más reciente primero)
+            const feedbacksOrdenados = [...feedbacksToExport].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            // Estadísticas específicas para el reporte
+            const total = feedbacksOrdenados.length;
+            const escritas = feedbacksOrdenados.filter(f => f.tipo === 'Escrita').length;
+            const verbales = feedbacksOrdenados.filter(f => f.tipo === 'Verbal').length;
+            const motivacion = feedbacksOrdenados.filter(f => f.subtipo === 'Motivación').length;
+            const desarrollo = feedbacksOrdenados.filter(f => f.subtipo === 'Desarrollo').length;
+            
+            // Crear contenido HTML para el PDF
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { color: #CF002E; text-align: center; }
+                        h2 { color: #333; border-bottom: 2px solid #FDD000; padding-bottom: 5px; }
+                        h3 { color: #555; margin-top: 20px; }
+                        .fecha-generacion { text-align: right; color: #666; margin-bottom: 30px; }
+                        .feedback-item { 
+                            border: 1px solid #ddd; 
+                            margin-bottom: 20px; 
+                            padding: 15px; 
+                            page-break-inside: avoid;
+                        }
+                        .feedback-header { 
+                            background-color: #f5f5f5; 
+                            padding: 10px; 
+                            margin-bottom: 10px;
+                            border-left: 4px solid #CF002E;
+                        }
+                        .feedback-details { margin-left: 20px; }
+                        .label { font-weight: bold; color: #555; }
+                        .value { margin-bottom: 8px; }
+                        .section { margin-bottom: 15px; }
+                        .badge { 
+                            display: inline-block; 
+                            padding: 3px 8px; 
+                            border-radius: 4px; 
+                            font-size: 0.9em; 
+                            font-weight: bold; 
+                            margin-right: 5px;
+                        }
+                        .escrita { background-color: #FDD000; color: #333; }
+                        .verbal { background-color: #CF002E; color: white; }
+                        .motivacion { background-color: #4CAF50; color: white; }
+                        .desarrollo { background-color: #2196F3; color: white; }
+                        .signature-section { 
+                            margin-top: 20px; 
+                            padding-top: 10px; 
+                            border-top: 1px dashed #ddd; 
+                        }
+                        .signature-line { 
+                            width: 300px; 
+                            border-bottom: 1px solid #333; 
+                            margin-top: 40px;
+                            text-align: center;
+                            padding-bottom: 5px;
+                        }
+                        .signature-label { 
+                            font-size: 0.9em; 
+                            color: #666; 
+                            text-align: center;
+                            margin-top: 5px;
+                        }
+                        .total-stats { 
+                            background-color: #f8f9fa; 
+                            padding: 15px; 
+                            margin-bottom: 20px;
+                            border-radius: 5px;
+                        }
+                        .stat-item { 
+                            display: inline-block; 
+                            margin-right: 30px; 
+                            padding: 10px;
+                            background-color: white;
+                            border-radius: 5px;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        }
+                        .stat-number { 
+                            font-size: 24px; 
+                            font-weight: bold; 
+                            color: #CF002E;
+                            display: block;
+                        }
+                        .stat-label { font-size: 0.9em; color: #666; }
+                        .notes-section {
+                            background-color: #fffde7;
+                            padding: 15px;
+                            margin: 20px 0;
+                            border-left: 4px solid #FDD000;
+                            border-radius: 5px;
+                        }
+                        .page-break { page-break-before: always; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${title}</h1>
+                    <div class="fecha-generacion">
+                        Generado: ${new Date().toLocaleString()}
+                    </div>
+                    
+                    ${notes ? `
+                    <div class="notes-section">
+                        <h3>Notas:</h3>
+                        <p>${notes.replace(/\n/g, '<br>')}</p>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="total-stats">
+                        <h2>Estadísticas del Reporte</h2>
+                        <div class="stat-item">
+                            <span class="stat-number">${total}</span>
+                            <span class="stat-label">Total retroalimentaciones</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">${escritas}</span>
+                            <span class="stat-label">Escritas</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">${verbales}</span>
+                            <span class="stat-label">Verbales</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">${motivacion}</span>
+                            <span class="stat-label">Motivación</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">${desarrollo}</span>
+                            <span class="stat-label">Desarrollo</span>
+                        </div>
+                    </div>
+            `;
+            
+            // Agregar cada retroalimentación
+            feedbacksOrdenados.forEach((feedback, index) => {
+                let tipoBadge = '';
+                if (feedback.tipo === 'Escrita') {
+                    if (feedback.subtipo === 'Motivación') {
+                        tipoBadge = '<span class="badge escrita motivacion">Escrita - Motivación</span>';
+                    } else {
+                        tipoBadge = '<span class="badge escrita desarrollo">Escrita - Desarrollo</span>';
+                    }
+                } else {
+                    tipoBadge = '<span class="badge verbal">Verbal</span>';
+                }
+                
+                htmlContent += `
+                    <div class="feedback-item">
+                        <div class="feedback-header">
+                            <h3>${feedback.folio} ${tipoBadge}</h3>
+                            <div>Fecha: ${feedback.fecha} | Registrado: ${new Date(feedback.timestamp).toLocaleString()}</div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="value"><span class="label">N. Empleado:</span> ${feedback.numEmpleado || 'N/A'}</div>
+                            <div class="value"><span class="label">Supervisor/Coordinador:</span> ${feedback.liderNombre || 'N/A'}</div>
+                            <div class="value"><span class="label">Cuadrilla colaborador:</span> ${feedback.cuadrillaColaborador || 'N/A'}</div>
+                            <div class="value"><span class="label">Area:</span> ${feedback.area || 'N/A'}</div>
+                        </div>
+                `;
+                
+                if (feedback.tipo === 'Escrita') {
+                    htmlContent += `
+                        <div class="section">
+                            <div class="value"><span class="label">Impactos identificados:</span></div>
+                            <div class="feedback-details">${feedback.impactos ? feedback.impactos.map(i => `• ${i}`).join('<br>') : 'N/A'}</div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="value"><span class="label">Descripcion del impacto:</span></div>
+                            <div class="feedback-details">${feedback.descripcionImpacto || 'N/A'}</div>
+                        </div>
+                        
+                        ${feedback.causas && feedback.causas.length > 0 ? `
+                        <div class="section">
+                            <div class="value"><span class="label">Causas identificadas por el colaborador:</span></div>
+                            <div class="feedback-details">${feedback.causas.map(c => `• ${c}`).join('<br>')}</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${feedback.explicacionCausa ? `
+                        <div class="section">
+                            <div class="value"><span class="label">Explicacion adicional del colaborador:</span></div>
+                            <div class="feedback-details">${feedback.explicacionCausa}</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${feedback.accionDiferente ? `
+                        <div class="section">
+                            <div class="value"><span class="label">Accion diferente sugerida:</span></div>
+                            <div class="feedback-details">${feedback.accionDiferente}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="section">
+                            <div class="value"><span class="label">Compromiso del colaborador:</span></div>
+                            <div class="feedback-details">${feedback.compromiso || 'N/A'}</div>
+                        </div>
+                    `;
+                } else {
+                    htmlContent += `
+                        <div class="section">
+                            <div class="value"><span class="label">Razon de la retroalimentacion:</span></div>
+                            <div class="feedback-details">${feedback.razon || 'N/A'}</div>
+                        </div>
+                    `;
+                }
+                
+                // Sección de firmas
+                htmlContent += `
+                    <div class="signature-section">
+                        <h4>Firmas:</h4>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                `;
+
+                // Mostrar firma del colaborador si existe
+                if (feedback.firmas && feedback.firmas.colaborador) {
+                    htmlContent += `
+                        <div style="text-align: center; margin: 10px;">
+                            <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
+                                <img src="${feedback.firmas.colaborador}" 
+                                     style="max-width: 200px; max-height: 80px; object-fit: contain;" 
+                                     alt="Firma del colaborador">
+                            </div>
+                            <div class="signature-label">Firma del Colaborador</div>
+                        </div>
+                    `;
+                } else {
+                    htmlContent += `
+                        <div style="text-align: center; margin: 10px;">
+                            <div class="signature-line"></div>
+                            <div class="signature-label">Firma del Colaborador</div>
+                        </div>
+                    `;
+                }
+
+                // Mostrar firma del supervisor si existe
+                if (feedback.firmas && feedback.firmas.supervisor) {
+                    htmlContent += `
+                        <div style="text-align: center; margin: 10px;">
+                            <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
+                                <img src="${feedback.firmas.supervisor}" 
+                                     style="max-width: 200px; max-height: 80px; object-fit: contain;" 
+                                     alt="Firma del supervisor">
+                            </div>
+                            <div class="signature-label">Firma del Supervisor</div>
+                        </div>
+                    `;
+                } else {
+                    htmlContent += `
+                        <div style="text-align: center; margin: 10px;">
+                            <div class="signature-line"></div>
+                            <div class="signature-label">Firma del Supervisor</div>
+                        </div>
+                    `;
+                }
+
+                // Para retroalimentación escrita, mostrar las otras firmas
+                if (feedback.tipo === 'Escrita') {
+                    // Firma sindical
+                    if (feedback.firmas && feedback.firmas.sindical) {
+                        htmlContent += `
+                            <div style="text-align: center; margin: 10px;">
+                                <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
+                                    <img src="${feedback.firmas.sindical}" 
+                                         style="max-width: 200px; max-height: 80px; object-fit: contain;" 
+                                         alt="Firma del líder sindical">
+                                </div>
+                                <div class="signature-label">Firma del Líder Sindical</div>
+                            </div>
+                        `;
+                    } else {
+                        htmlContent += `
+                            <div style="text-align: center; margin: 10px;">
+                                <div class="signature-line"></div>
+                                <div class="signature-label">Firma del Líder Sindical</div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Firma de recursos humanos
+                    if (feedback.firmas && feedback.firmas.rh) {
+                        htmlContent += `
+                            <div style="text-align: center; margin: 10px;">
+                                <div style="width: 200px; height: 80px; border-bottom: 1px solid #333;">
+                                    <img src="${feedback.firmas.rh}" 
+                                         style="max-width: 200px; max-height: 80px; object-fit: contain;" 
+                                         alt="Firma de recursos humanos">
+                                </div>
+                                <div class="signature-label">Firma de Recursos Humanos</div>
+                            </div>
+                        `;
+                    } else {
+                        htmlContent += `
+                            <div style="text-align: center; margin: 10px;">
+                                <div class="signature-line"></div>
+                                <div class="signature-label">Firma de Recursos Humanos</div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    htmlContent += `
+                        <div style="text-align: center; margin: 10px;">
+                            <div class="signature-line"></div>
+                            <div class="signature-label">Firma del Coordinador</div>
+                        </div>
+                    `;
+                }
+
+                htmlContent += `
+                        </div>
+                    </div>
+                </div>
+                `;
+                
+                // Agregar salto de página cada 3 retroalimentaciones
+                if ((index + 1) % 3 === 0 && (index + 1) < feedbacksOrdenados.length) {
+                    htmlContent += '<div class="page-break"></div>';
+                }
+            });
+            
+            htmlContent += `
+                    </body>
+                    </html>
+                `;
+            
+            // Crear y mostrar el PDF
+            const fecha = new Date().toISOString().split('T')[0];
+            const filename = `reporte_retroalimentaciones_${fecha}.pdf`;
+            
+            const ventana = window.open('', '_blank');
+            ventana.document.write(htmlContent);
+            ventana.document.close();
+            
+            alert(`Se ha generado el reporte PDF con ${feedbacksOrdenados.length} retroalimentaciones.`);
+        }
+        
+    </script>
+</body>
+</html>
