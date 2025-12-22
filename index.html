@@ -2026,39 +2026,52 @@
         }
         
         function promptGitHubConfig() {
-            const username = prompt('📝 Nombre de usuario de GitHub:', GITHUB_CONFIG.username || '');
-            if (!username) {
-                alert('Configuración cancelada');
-                return;
-            }
-            
-            const token = prompt('🔑 Token de acceso personal de GitHub:');
-            if (!token) {
-                alert('Configuración cancelada');
-                return;
-            }
-            
-            const repo = prompt('📁 Nombre del repositorio:', 
-                               GITHUB_CONFIG.repo || 'retroalimentacion-db');
-            
-            if (!repo) {
-                alert('Debes especificar un nombre de repositorio');
-                return;
-            }
-            
-            // Actualizar configuración
-            GITHUB_CONFIG.username = username;
-            GITHUB_CONFIG.token = token;
-            GITHUB_CONFIG.repo = repo;
-            
-            // Guardar en localStorage
-            localStorage.setItem('github_config', JSON.stringify({
-                username: username,
-                token: token,
-                repo: repo
-            }));
-            
-            alert('✅ Configuración de GitHub guardada.\nLos datos se guardarán en la nube.');
+    // Crear un modal mejorado
+    const username = prompt('📝 Nombre de usuario de GitHub:', GITHUB_CONFIG.username || '');
+    if (!username) {
+        alert('Configuración cancelada');
+        return;
+    }
+    
+    const token = prompt('🔑 Token de acceso personal de GitHub\n\nIMPORTANTE: El token debe tener permisos "repo":', '');
+    if (!token) {
+        alert('Configuración cancelada');
+        return;
+    }
+    
+    const repo = prompt('📁 Nombre del repositorio (DEBE existir en tu cuenta GitHub):', 
+                       GITHUB_CONFIG.repo || 'retroalimentacion-db');
+    
+    if (!repo) {
+        alert('Debes especificar un nombre de repositorio');
+        return;
+    }
+    
+    // Actualizar configuración
+    GITHUB_CONFIG.username = username;
+    GITHUB_CONFIG.token = token;
+    GITHUB_CONFIG.repo = repo;
+    
+    // Guardar en localStorage
+    localStorage.setItem('github_config', JSON.stringify({
+        username: username,
+        token: token,
+        repo: repo
+    }));
+    
+    alert('⏳ Verificando configuración...');
+    
+    // Verificar si el repositorio existe
+    fetch(`https://api.github.com/repos/${username}/${repo}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Repositorio existe
+            alert('✅ ¡Configuración exitosa!\nLos datos se guardarán en GitHub.');
             
             // Ocultar botón de configuración
             document.getElementById('btn-config-github').classList.add('hidden');
@@ -2068,12 +2081,18 @@
                 if (currentUser === 'admin') {
                     actualizarDashboard();
                 }
-                alert('✅ Datos sincronizados con GitHub exitosamente.');
-            }).catch(error => {
-                console.error('Error sincronizando con GitHub:', error);
-                alert('⚠️ Los datos se guardarán en localStorage por ahora.');
             });
+            
+        } else if (response.status === 404) {
+            alert(`❌ El repositorio "${repo}" no existe en tu cuenta GitHub.\n\nPor favor:\n1. Ve a https://github.com/new\n2. Crea el repositorio "${repo}"\n3. Vuelve a configurar\n\nLos datos se guardarán en localStorage por ahora.`);
+        } else {
+            alert(`⚠️ Error: ${response.status} - ${response.statusText}\nVerifica tu token y usuario.\nLos datos se guardarán en localStorage.`);
         }
+    })
+    .catch(error => {
+        alert(`❌ Error de conexión: ${error.message}\nLos datos se guardarán en localStorage.`);
+    });
+}
         
         document.getElementById('btn-logout').addEventListener('click', function() {
             if (confirm('¿Está seguro que desea salir del sistema?')) {
