@@ -620,6 +620,51 @@
             border-radius: var(--border-radius);
             border-left: 4px solid var(--primary-color);
         }
+/* === NUEVAS REGLAS CSS - AGREGAR AQUÍ === */
+.fecha-solo-lectura {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    color: #666;
+}
+
+.image-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    justify-content: center;
+}
+
+/* Mejoras para el filtro de administrador */
+.admin-controls .form-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-controls .form-group label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.filter-status {
+    padding: 10px;
+    background-color: #e8f4fd;
+    border-radius: var(--border-radius);
+    margin-top: 10px;
+    display: none;
+}
+
+.filter-status.active {
+    display: block;
+}
+
+/* Mejoras para canvas */
+.signature-canvas {
+    touch-action: none;
+}
+
+/* === FIN NUEVAS REGLAS CSS === */
+
     </style>
 </head>
 <body>
@@ -720,7 +765,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="fecha-escrita" class="required">Fecha</label>
-                                <input type="date" id="fecha-escrita" required>
+                                <input type="text" id="fecha-escrita" readonly class="fecha-solo-lectura">
+
                             </div>
                         </div>
                         
@@ -971,7 +1017,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="fecha-verbal" class="required">Fecha</label>
-                                <input type="date" id="fecha-verbal" required>
+                               <input type="text" id="fecha-verbal" readonly class="fecha-solo-lectura">
                             </div>
                         </div>
                         
@@ -1043,15 +1089,25 @@
                             <textarea id="razon-verbal" placeholder="Describa la razón de la retroalimentación verbal..." required></textarea>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="image-upload-area">Imagen (Opcional)</label>
-                            <div class="image-upload" id="image-upload-area">
-                                <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
-                                <p>Haz clic o arrastra una imagen aquí</p>
-                                <input type="file" id="image-upload" accept="image/*" style="display: none;">
-                            </div>
-                            <img id="image-preview" class="image-preview" alt="Vista previa">
-                        </div>
+                      <div class="form-group">
+    <label for="image-upload-area">Imagen (Opcional)</label>
+    <div class="image-upload" id="image-upload-area">
+        <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
+        <p>Haz clic o arrastra una imagen aquí</p>
+        <input type="file" id="image-upload" accept="image/*" style="display: none;">
+    </div>
+    <div id="image-preview-container" style="display: none;">
+        <img id="image-preview" class="image-preview" alt="Vista previa">
+        <div class="button-group" style="margin-top: 10px;">
+            <button type="button" class="btn btn-outline" id="replace-image">
+                <i class="fas fa-sync-alt"></i> Reemplazar
+            </button>
+            <button type="button" class="btn btn-outline" id="remove-image">
+                <i class="fas fa-trash"></i> Eliminar
+            </button>
+        </div>
+    </div>
+</div>
                     </div>
                     
                     <div class="form-section">
