@@ -742,10 +742,9 @@
                             <label for="area" class="required">Área</label>
                             <select id="area" required>
                                 <option value="">Seleccionar área</option>
-                                <option value="A">Área A</option>
-                                <option value="B">Área B</option>
-                                <option value="C">Área C</option>
-                                <option value="D">Área D</option>
+                                <option value="A">Operaciones</option>
+                                <option value="B">PFCT</option>
+                                <option value="C">CRYD</option>
                                 <option value="Otro">Otro</option>
                             </select>
                             <div id="area-otro-container" class="hidden">
@@ -784,16 +783,11 @@
                             <label for="cuadrilla-colaborador" class="required">Cuadrilla colaborador</label>
                             <select id="cuadrilla-colaborador" required>
                                 <option value="">Seleccionar cuadrilla</option>
-                                <option value="Cuadrilla 1">Cuadrilla 1</option>
-                                <option value="Cuadrilla 2">Cuadrilla 2</option>
-                                <option value="Cuadrilla 3">Cuadrilla 3</option>
-                                <option value="Cuadrilla 4">Cuadrilla 4</option>
-                                <option value="Cuadrilla 5">Cuadrilla 5</option>
-                                <option value="Cuadrilla 6">Cuadrilla 6</option>
-                                <option value="Cuadrilla 7">Cuadrilla 7</option>
-                                <option value="Cuadrilla 8">Cuadrilla 8</option>
-                                <option value="Cuadrilla 9">Cuadrilla 9</option>
-                                <option value="Cuadrilla 10">Cuadrilla 10</option>
+                                <option value="Cuadrilla 1">A</option>
+                                <option value="Cuadrilla 2">B</option>
+                                <option value="Cuadrilla 3">C</option>
+                                <option value="Cuadrilla 4">D</option>
+                               
                                 <option value="Otro">Otro</option>
                             </select>
                         </div>
@@ -809,7 +803,7 @@
                         <p class="info-text">Esta sección se completará con información proporcionada por el colaborador.</p>
                         
                         <div class="form-group">
-                            <label class="required">Causa del Problema</label>
+                            <label class="required">¿Por qué cree que ocurre el problema?</label>
                             <div class="checkbox-vertical">
                                 <label class="checkbox-option">
                                     <input type="checkbox" name="causa-problema" value="Falta de capacitación">
@@ -843,12 +837,12 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="explicacion-causa-colaborador">Explicación de las causas (colaborador)</label>
+                            <label for="explicacion-causa-colaborador">Explicación de las causas</label>
                             <textarea id="explicacion-causa-colaborador" placeholder="El colaborador explica las causas del problema..."></textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label for="accion-diferente">¿Qué hubiera hecho diferente? (colaborador)</label>
+                            <label for="accion-diferente">¿Qué harías diferente dentro de tu proceso para prevenir errores similares?</label>
                             <textarea id="accion-diferente" placeholder="El colaborador describe qué hubiera hecho diferente..."></textarea>
                         </div>
                     </div>
@@ -857,23 +851,23 @@
                         <h3><i class="fas fa-bullseye"></i> Impacto Identificado</h3>
                         
                         <div class="form-group">
-                            <label class="required">Tipos de Impacto</label>
+                            <label class="required">¿Qué impacto tiene la acción?</label>
                             <div class="checkbox-vertical">
                                 <label class="checkbox-option">
                                     <input type="checkbox" name="impacto" value="Seguridad">
-                                    <span>Seguridad</span>
+                                    <span>Riesgo de seguridad</span>
                                 </label>
                                 <label class="checkbox-option">
                                     <input type="checkbox" name="impacto" value="Calidad">
-                                    <span>Calidad</span>
+                                    <span>Riesgo de calidad</span>
                                 </label>
                                 <label class="checkbox-option">
                                     <input type="checkbox" name="impacto" value="Productividad">
-                                    <span>Productividad</span>
+                                    <span>Riesgo operativo</span>
                                 </label>
                                 <label class="checkbox-option">
                                     <input type="checkbox" name="impacto" value="Medio Ambiente">
-                                    <span>Medio Ambiente</span>
+                                    <span>Riesgo de inventario</span>
                                 </label>
                                 <label class="checkbox-option">
                                     <input type="checkbox" name="impacto" value="Costos">
@@ -892,7 +886,7 @@
                         <h3><i class="fas fa-clipboard-check"></i> Compromiso</h3>
                         
                         <div class="form-group">
-                            <label for="compromiso" class="required">Compromiso del Colaborador</label>
+                            <label for="compromiso" class="required">¿Cuál es el compromiso del colaborador?</label>
                             <textarea id="compromiso" placeholder="Compromiso acordado con el colaborador..." required></textarea>
                         </div>
                     </div>
@@ -913,7 +907,7 @@
                         
                         <!-- Firma Supervisor -->
                         <div class="signature-container">
-                            <h4>Firma del Supervisor</h4>
+                            <h4>Firma del Supervisor/Coordinador</h4>
                             <canvas id="signature-canvas-supervisor" class="signature-canvas"></canvas>
                             <div class="signature-controls">
                                 <button type="button" class="btn btn-outline" id="clear-supervisor">
@@ -1009,16 +1003,10 @@
                             <label for="cuadrilla-verbal-colaborador" class="required">Cuadrilla colaborador</label>
                             <select id="cuadrilla-verbal-colaborador" required>
                                 <option value="">Seleccionar cuadrilla</option>
-                                <option value="Cuadrilla 1">Cuadrilla 1</option>
-                                <option value="Cuadrilla 2">Cuadrilla 2</option>
-                                <option value="Cuadrilla 3">Cuadrilla 3</option>
-                                <option value="Cuadrilla 4">Cuadrilla 4</option>
-                                <option value="Cuadrilla 5">Cuadrilla 5</option>
-                                <option value="Cuadrilla 6">Cuadrilla 6</option>
-                                <option value="Cuadrilla 7">Cuadrilla 7</option>
-                                <option value="Cuadrilla 8">Cuadrilla 8</option>
-                                <option value="Cuadrilla 9">Cuadrilla 9</option>
-                                <option value="Cuadrilla 10">Cuadrilla 10</option>
+                                <option value="Cuadrilla 1">A</option>
+                                <option value="Cuadrilla 2">B</option>
+                                <option value="Cuadrilla 3">C</option>
+                                <option value="Cuadrilla 4">D</option>
                                 <option value="Otro">Otro</option>
                             </select>
                         </div>
@@ -1064,7 +1052,7 @@
                         
                         <!-- Firma Supervisor -->
                         <div class="signature-container">
-                            <h4>Firma del Supervisor</h4>
+                            <h4>Firma del Supervisor/Coordinador</h4>
                             <canvas id="signature-canvas-verbal-supervisor" class="signature-canvas"></canvas>
                             <div class="signature-controls">
                                 <button type="button" class="btn btn-outline" id="clear-verbal-supervisor">
@@ -3563,14 +3551,14 @@ function generatePDF(feedbacksToExport, title, notes) {
                              style="max-width: 200px; max-height: 80px; object-fit: contain;" 
                              alt="Firma del supervisor">
                     </div>
-                    <div class="signature-label">Firma del Supervisor</div>
+                    <div class="signature-label">Firma del Supervisor/Coordinador</div>
                 </div>
             `;
         } else {
             htmlContent += `
                 <div style="text-align: center; margin: 10px;">
                     <div class="signature-line"></div>
-                    <div class="signature-label">Firma del Supervisor</div>
+                    <div class="signature-label">Firma del Supervisor/Coordinador</div>
                 </div>
             `;
         }
