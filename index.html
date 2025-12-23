@@ -1060,19 +1060,19 @@
                             </select>
                         </div>
                         
-                            <div class="form-group">
-                            <label for="area" class="required">Área de colaborador</label>
-                            <select id="area" required>
-                                <option value="">Seleccionar área</option>
-                                <option value="A">Operaciones</option>
-                                <option value="B">PFCT</option>
-                                <option value="C">CRYD</option>
-                                <option value="Otro">Otro</option>
-                            </select>
-                            <div id="area-otro-container" class="hidden">
-                                <input type="text" id="area-otro" placeholder="Especificar área">
-                            </div>
-                        </div>
+                           <div class="form-group">
+    <label for="area-verbal" class="required">Área de colaborador</label>
+    <select id="area-verbal" required>
+        <option value="">Seleccionar área</option>
+        <option value="A">Operaciones</option>
+        <option value="B">PFCT</option>
+        <option value="C">CRYD</option>
+        <option value="Otro">Otro</option>
+    </select>
+    <div id="area-verbal-otro-container" class="hidden">
+        <input type="text" id="area-verbal-otro" placeholder="Especificar área">
+    </div>
+</div>
 
                         
                         <div class="form-group">
@@ -2179,27 +2179,28 @@ document.addEventListener('DOMContentLoaded', async function() {
     const tieneSesion = initSession();
     
     if (!tieneSesion) {
-        // Mostrar pantalla de login
         document.getElementById('login-screen').classList.remove('hidden');
         document.getElementById('app').classList.add('hidden');
+    } else {
+        // Si ya hay sesión, cargar datos y mostrar la app
+        await loadAllData();
+        
+        // CRÍTICO: Cargar líderes y actualizar fechas antes de mostrar la app
+        cargarLideres();
+        actualizarFechas();
+        
+        showApp();
+        setupUserInterface();
+        resetSessionTimer();
     }
     
-    // 3. Inicializar canvas
-    initializeAllCanvas();
-    
-    // 4. Cargar datos
-    await loadAllData();
-    
-    // 5. Configurar elementos básicos
-    cargarLideres();
-    actualizarFechas();
+    // 3. Configurar eventos básicos
     setupBasicEventListeners();
-    setupEventListeners();
     
-    // 6. Configurar eventos específicos del login
+    // 4. Configurar eventos específicos del login
     document.getElementById('user-role').addEventListener('change', function() {
         const configSection = document.getElementById('github-config-section-login');
-        if (this.value === 'admin') {
+        if (this.value === 'admin' && (!GITHUB_CONFIG.token || !GITHUB_CONFIG.username)) {
             configSection.classList.remove('hidden');
         } else {
             configSection.classList.add('hidden');
@@ -2215,10 +2216,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('cancel-github-config').addEventListener('click', closeGitHubModal);
     document.getElementById('btn-save-github-config-app').addEventListener('click', saveGitHubConfigFromApp);
     
-    // 7. Resetear timer de sesión en interacción del usuario
+    // 5. Configurar manejadores de imagen y filtros
+    setTimeout(() => {
+        setupImageHandlers();
+        setupFilterHandlers();
+        initializeAllCanvas();
+    }, 300);
+    
+    // 6. Cargar datos si no hay sesión (para configurar formularios)
+    // ESTA SECCIÓN SE ELIMINA - NO SE NECESITA MÁS
+    
+    // 7. Setup de eventos generales
+    setupEventListeners();
+    
+    // 8. Resetear timer de sesión en interacción del usuario
     document.addEventListener('click', resetSessionTimer);
     document.addEventListener('keypress', resetSessionTimer);
 });
+    
 
 // ============================================
 // FUNCIONES PARA CANVAS DE FIRMAS
@@ -2247,6 +2262,47 @@ function initializeAllCanvas() {
     }, 100);
 }
 
+// Agrega esta función NUEVA después de initializeAllCanvas()
+function initializeVerbalCanvases() {
+    console.log('🔄 Inicializando canvas de formulario verbal...');
+    
+    // Canvas para firma del colaborador (verbal)
+    const canvasColabVerbal = document.getElementById('signature-canvas-verbal-colaborador');
+    if (canvasColabVerbal) {
+        const parent = canvasColabVerbal.parentElement;
+        if (parent) {
+            canvasColabVerbal.width = parent.clientWidth - 40; // Restar padding
+            canvasColabVerbal.height = 150;
+            
+            const ctx = canvasColabVerbal.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvasColabVerbal.width, canvasColabVerbal.height);
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+    }
+    
+    // Canvas para firma del supervisor (verbal)
+    const canvasSuperVerbal = document.getElementById('signature-canvas-verbal-supervisor');
+    if (canvasSuperVerbal) {
+        const parent = canvasSuperVerbal.parentElement;
+        if (parent) {
+            canvasSuperVerbal.width = parent.clientWidth - 40; // Restar padding
+            canvasSuperVerbal.height = 150;
+            
+            const ctx = canvasSuperVerbal.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvasSuperVerbal.width, canvasSuperVerbal.height);
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+    }
+}
+
 function initializeCanvas(canvasId, clearBtnId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
@@ -2254,22 +2310,20 @@ function initializeCanvas(canvasId, clearBtnId) {
         return;
     }
     
+    // Configurar tamaño del canvas
+    const parentWidth = canvas.parentElement.clientWidth;
+    canvas.width = parentWidth;
+    canvas.height = 150;
+    
     const ctx = canvas.getContext('2d');
     
-    const updateCanvasSize = () => {
-        const parentWidth = canvas.parentElement.clientWidth;
-        canvas.width = parentWidth;
-        canvas.height = 150;
-        
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#333333';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-    };
-    
-    updateCanvasSize();
+    // Limpiar canvas
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     
     let isDrawing = false;
     let lastX = 0;
@@ -2277,64 +2331,72 @@ function initializeCanvas(canvasId, clearBtnId) {
     
     function startDrawing(e) {
         isDrawing = true;
-        [lastX, lastY] = getCoordinates(e);
+        const pos = getMousePos(canvas, e);
+        lastX = pos.x;
+        lastY = pos.y;
     }
     
     function draw(e) {
         if (!isDrawing) return;
         
-        const [x, y] = getCoordinates(e);
+        const pos = getMousePos(canvas, e);
+        const x = pos.x;
+        const y = pos.y;
         
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(x, y);
         ctx.stroke();
         
-        [lastX, lastY] = [x, y];
+        lastX = x;
+        lastY = y;
     }
     
     function stopDrawing() {
         isDrawing = false;
     }
     
-    function getCoordinates(e) {
+    function getMousePos(canvas, evt) {
+        const rect = canvas.getBoundingClientRect();
         let x, y;
         
-        if (e.type.includes('mouse')) {
-            x = e.offsetX;
-            y = e.offsetY;
-        } else if (e.type.includes('touch')) {
-            const rect = canvas.getBoundingClientRect();
-            x = e.touches[0].clientX - rect.left;
-            y = e.touches[0].clientY - rect.top;
+        if (evt.type.includes('touch')) {
+            x = evt.touches[0].clientX - rect.left;
+            y = evt.touches[0].clientY - rect.top;
+        } else {
+            x = evt.clientX - rect.left;
+            y = evt.clientY - rect.top;
         }
         
-        return [x, y];
+        return { x: x, y: y };
     }
     
+    // Eventos para mouse
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseout', stopDrawing);
     
-    canvas.addEventListener('touchstart', (e) => {
+    // Eventos para touch
+    canvas.addEventListener('touchstart', function(e) {
         e.preventDefault();
         startDrawing(e);
-    });
+    }, { passive: false });
     
-    canvas.addEventListener('touchmove', (e) => {
+    canvas.addEventListener('touchmove', function(e) {
         e.preventDefault();
         draw(e);
-    });
+    }, { passive: false });
     
-    canvas.addEventListener('touchend', (e) => {
+    canvas.addEventListener('touchend', function(e) {
         e.preventDefault();
         stopDrawing();
-    });
+    }, { passive: false });
     
+    // Botón para limpiar
     const clearBtn = document.getElementById(clearBtnId);
     if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
+        clearBtn.addEventListener('click', function() {
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = '#333333';
@@ -2343,8 +2405,6 @@ function initializeCanvas(canvasId, clearBtnId) {
             ctx.lineJoin = 'round';
         });
     }
-    
-    window.addEventListener('resize', updateCanvasSize);
 }
 
 function limpiarTodosLosCanvas() {
@@ -2371,6 +2431,64 @@ function limpiarTodosLosCanvas() {
     });
 }
 
+// ============================================
+// FUNCIONES PARA MANEJO DE IMÁGENES - NUEVO
+// ============================================
+
+function setupImageHandlers() {
+    const imageUpload = document.getElementById('image-upload');
+    const imageUploadArea = document.getElementById('image-upload-area');
+    const imagePreview = document.getElementById('image-preview');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const replaceImageBtn = document.getElementById('replace-image');
+    const removeImageBtn = document.getElementById('remove-image');
+    
+    if (!imageUpload) return;
+    
+    imageUploadArea.addEventListener('click', function() {
+        imageUpload.click();
+    });
+    
+    imageUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 5MB.');
+                return;
+            }
+            
+            if (!file.type.match('image.*')) {
+                alert('Por favor seleccione un archivo de imagen válido.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.style.display = 'block';
+                imageUploadArea.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    if (replaceImageBtn) {
+        replaceImageBtn.addEventListener('click', function() {
+            imageUploadArea.style.display = 'block';
+            imagePreviewContainer.style.display = 'none';
+            imageUpload.value = '';
+        });
+    }
+    
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', function() {
+            imagePreview.src = '';
+            imagePreviewContainer.style.display = 'none';
+            imageUploadArea.style.display = 'block';
+            imageUpload.value = '';
+        });
+    }
+}
 // ============================================
 // AUTENTICACIÓN Y CONFIGURACIÓN
 // ============================================
@@ -2403,8 +2521,15 @@ async function handleLogin() {
         localStorage.setItem('currentUser', role);
         
         document.getElementById('login-screen').classList.add('hidden');
-        showApp();
         
+        // CRÍTICO: Cargar datos ANTES de mostrar la app
+        await loadAllData();
+        
+        // CRÍTICO: Cargar líderes y actualizar fechas
+        cargarLideres();
+        actualizarFechas();
+        
+        showApp();
         setupUserInterface();
         
         resetSessionTimer();
@@ -2450,12 +2575,68 @@ function setupUserInterface() {
         showTab('form-escrita');
     }
 }
+
+// ============================================
+// FUNCIONES PARA MANEJO DE FILTRO - NUEVO
+// ============================================
+
+function setupFilterHandlers() {
+    const filterApply = document.getElementById('filter-apply');
+    const filterClear = document.getElementById('filter-clear');
+    const filterDate = document.getElementById('filter-date');
+    
+    if (filterApply) {
+        filterApply.addEventListener('click', aplicarFiltro);
+    }
+    
+    if (filterClear) {
+        filterClear.addEventListener('click', function() {
+            filterDate.value = '';
+            actualizarTablaFeedbacks();
+            updateFilterStats();
+        });
+    }
+    
+    if (filterDate) {
+        filterDate.addEventListener('change', function() {
+            if (this.value) {
+                aplicarFiltro();
+            }
+        });
+    }
+}
+
+function updateFilterStats() {
+    const fecha = document.getElementById('filter-date').value;
+    
+    // Convertir fecha a formato español para comparar
+    let fechaFiltro = fecha;
+    if (fecha) {
+        const [year, month, day] = fecha.split('-');
+        fechaFiltro = `${day}/${month}/${year}`;
+    }
+    
+    let feedbacksFiltrados = feedbacks;
+    
+    if (fechaFiltro) {
+        feedbacksFiltrados = feedbacks.filter(f => f.fecha === fechaFiltro);
+    }
+    
+    const total = feedbacksFiltrados.length;
+    const escritas = feedbacksFiltrados.filter(f => f.tipo === 'Escrita').length;
+    const verbales = feedbacksFiltrados.filter(f => f.tipo === 'Verbal').length;
+    
+    document.getElementById('total-feedbacks').textContent = total;
+    document.getElementById('escritas-count').textContent = escritas;
+    document.getElementById('verbales-count').textContent = verbales;
+}
 // ============================================
 // FUNCIONES PRINCIPALES
 // ============================================
 
 function showApp() {
     document.getElementById('app').classList.remove('hidden');
+    document.getElementById('login-screen').classList.add('hidden'); // Asegurar que login esté oculto
 }
 
 function setupEventListeners() {
@@ -2489,6 +2670,19 @@ function setupEventListeners() {
         }
     });
     
+        
+    // Manejador para área en formulario verbal
+    document.getElementById('area-verbal').addEventListener('change', function() {
+        const areaVerbalOtroContainer = document.getElementById('area-verbal-otro-container');
+        if (this.value === 'Otro') {
+            areaVerbalOtroContainer.classList.remove('hidden');
+            document.getElementById('area-verbal-otro').required = true;
+        } else {
+            areaVerbalOtroContainer.classList.add('hidden');
+            document.getElementById('area-verbal-otro').required = false;
+        }
+    });
+
     document.getElementById('lider').addEventListener('change', function() {
         const liderOtroContainer = document.getElementById('lider-otro-container');
         if (this.value === 'otro') {
@@ -2624,16 +2818,28 @@ function generarFolio(tipo) {
 }
 
 function actualizarFechas() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha-escrita').value = today;
-    document.getElementById('fecha-verbal').value = today;
-    document.getElementById('filter-date').value = today;
+    const today = new Date();
+    const fechaFormateada = today.toISOString().split('T')[0];
+    const fechaTexto = today.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+    
+    document.getElementById('fecha-escrita').value = fechaTexto;
+    document.getElementById('fecha-verbal').value = fechaTexto;
+    document.getElementById('filter-date').value = fechaFormateada;
     
     document.getElementById('folio-escrita').value = generarFolio('escrita');
     document.getElementById('folio-verbal').value = generarFolio('verbal');
 }
 
 function showTab(tabId) {
+    // Si vamos a un formulario, asegurar que las fechas y folios estén actualizados
+    if (tabId === 'form-escrita' || tabId === 'form-verbal') {
+        actualizarFechas();
+    }
+    
     document.querySelectorAll('.nav-tab').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -2651,6 +2857,80 @@ function showTab(tabId) {
     
     setTimeout(() => {
         initializeAllCanvas();
+        
+        // ESPECÍFICO PARA FORMULARIO VERBAL: Inicializar canvas de firmas
+        if (tabId === 'form-verbal') {
+            console.log('🔄 Inicializando canvas de formulario verbal...');
+            
+            // 1. Canvas de firma del colaborador (verbal)
+            const canvasColabVerbal = document.getElementById('signature-canvas-verbal-colaborador');
+            if (canvasColabVerbal) {
+                // Asegurar tamaño correcto
+                const container = canvasColabVerbal.closest('.signature-container');
+                if (container) {
+                    canvasColabVerbal.width = container.clientWidth - 40;
+                    canvasColabVerbal.height = 150;
+                    
+                    // Limpiar y preparar contexto
+                    const ctx = canvasColabVerbal.getContext('2d');
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvasColabVerbal.width, canvasColabVerbal.height);
+                    ctx.strokeStyle = '#333333';
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    console.log('✅ Canvas colaborador verbal listo');
+                }
+            }
+            
+            // 2. Canvas de firma del supervisor (verbal)
+            const canvasSuperVerbal = document.getElementById('signature-canvas-verbal-supervisor');
+            if (canvasSuperVerbal) {
+                // Asegurar tamaño correcto
+                const container = canvasSuperVerbal.closest('.signature-container');
+                if (container) {
+                    canvasSuperVerbal.width = container.clientWidth - 40;
+                    canvasSuperVerbal.height = 150;
+                    
+                    // Limpiar y preparar contexto
+                    const ctx = canvasSuperVerbal.getContext('2d');
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvasSuperVerbal.width, canvasSuperVerbal.height);
+                    ctx.strokeStyle = '#333333';
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    console.log('✅ Canvas supervisor verbal listo');
+                }
+            }
+            
+            // 3. Forzar re-inicialización de eventos de dibujo
+            setTimeout(() => {
+                // Remover inicialización anterior
+                const canvasIds = [
+                    'signature-canvas-verbal-colaborador',
+                    'signature-canvas-verbal-supervisor'
+                ];
+                
+                canvasIds.forEach(canvasId => {
+                    const canvas = document.getElementById(canvasId);
+                    if (canvas) {
+                        canvas.dataset.initialized = 'false';
+                        
+                        // Volver a inicializar usando la función initializeCanvas
+                        if (canvasId === 'signature-canvas-verbal-colaborador') {
+                            initializeCanvas(canvasId, 'clear-verbal-colaborador');
+                        } else {
+                            initializeCanvas(canvasId, 'clear-verbal-supervisor');
+                        }
+                        
+                        console.log(`🔄 Canvas ${canvasId} re-inicializado`);
+                    }
+                });
+            }, 100);
+        }
     }, 150);
 }
 
@@ -2661,11 +2941,11 @@ function showTab(tabId) {
 async function submitFormEscrita(e) {
     e.preventDefault();
     
-    const areaSelect = document.getElementById('area').value;
+      const areaSelect = document.getElementById('area-verbal').value; // Cambiado de 'area' a 'area-verbal'
     let area = areaSelect;
     
     if (areaSelect === 'Otro') {
-        area = document.getElementById('area-otro').value;
+        area = document.getElementById('area-verbal-otro').value; // Cambiado de 'area-otro' a 'area-verbal-otro'
         if (!area) {
             alert('Por favor especifique el área cuando selecciona "Otro"');
             return;
@@ -2907,6 +3187,10 @@ function resetFormVerbal() {
     document.getElementById('lider-verbal-otro-puesto').required = false;
     document.getElementById('lider-verbal-otro-area').required = false;
     
+    // Agregar estas líneas para el área verbal:
+    document.getElementById('area-verbal-otro-container').classList.add('hidden');
+    document.getElementById('area-verbal-otro').required = false;
+    
     actualizarFechas();
     limpiarTodosLosCanvas();
 }
@@ -2946,6 +3230,17 @@ function actualizarTablaFeedbacks(filtroFecha = null) {
     
     if (feedbacksFiltrados.length === 0) {
         noDataMsg.style.display = 'block';
+        if (filtroFecha) {
+            noDataMsg.innerHTML = `
+                <i class="fas fa-filter" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
+                <p>No hay retroalimentaciones para la fecha: ${filtroFecha}</p>
+            `;
+        } else {
+            noDataMsg.innerHTML = `
+                <i class="fas fa-database" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
+                <p>No hay retroalimentaciones registradas.</p>
+            `;
+        }
         tbody.style.display = 'none';
         return;
     }
@@ -3171,12 +3466,46 @@ async function eliminarFeedback(id) {
 
 function aplicarFiltro() {
     const fecha = document.getElementById('filter-date').value;
-    if (!fecha) {
-        alert('Por favor seleccione una fecha');
-        return;
+    
+    // Convertir fecha a formato español para comparar
+    let fechaFiltro = fecha;
+    if (fecha) {
+        const [year, month, day] = fecha.split('-');
+        fechaFiltro = `${day}/${month}/${year}`;
     }
     
-    actualizarTablaFeedbacks(fecha);
+    // Filtrar feedbacks
+    const feedbacksFiltrados = fecha ? 
+        feedbacks.filter(f => {
+            // Normalizar fechas para comparación
+            const fechaFeedback = f.fecha;
+            return fechaFeedback === fechaFiltro;
+        }) : 
+        feedbacks;
+    
+    // Actualizar estadísticas
+    const total = feedbacksFiltrados.length;
+    const escritas = feedbacksFiltrados.filter(f => f.tipo === 'Escrita').length;
+    const verbales = feedbacksFiltrados.filter(f => f.tipo === 'Verbal').length;
+    
+    document.getElementById('total-feedbacks').textContent = total;
+    document.getElementById('escritas-count').textContent = escritas;
+    document.getElementById('verbales-count').textContent = verbales;
+    
+    // Actualizar tabla
+    actualizarTablaFeedbacks(fechaFiltro);
+    
+    // Mostrar mensaje si no hay resultados
+    const noDataMsg = document.getElementById('no-data-message');
+    if (feedbacksFiltrados.length === 0) {
+        noDataMsg.style.display = 'block';
+        noDataMsg.innerHTML = `
+            <i class="fas fa-filter" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
+            <p>No hay retroalimentaciones para la fecha: ${fechaFiltro || fecha}</p>
+        `;
+    } else {
+        noDataMsg.style.display = 'none';
+    }
 }
 
 function limpiarFiltro() {
