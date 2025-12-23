@@ -2938,10 +2938,12 @@ function showTab(tabId) {
 async function submitFormEscrita(e) {
     e.preventDefault();
     
-      const areaSelect = document.getElementById('area').value; // ← CORRECTO para formulario ESCRITA
+    // **CORRECCIÓN CRÍTICA: Cambiar 'area-verbal' por 'area'**
+    const areaSelect = document.getElementById('area').value; // ← CAMBIADO
+    let area = areaSelect;
     
     if (areaSelect === 'Otro') {
-        area = document.getElementById('area-verbal-otro').value; // Cambiado de 'area-otro' a 'area-verbal-otro'
+        area = document.getElementById('area-otro').value; // ← CAMBIADO
         if (!area) {
             alert('Por favor especifique el área cuando selecciona "Otro"');
             return;
