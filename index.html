@@ -2938,8 +2938,7 @@ function showTab(tabId) {
 async function submitFormEscrita(e) {
     e.preventDefault();
     
-      const areaSelect = document.getElementById('area-verbal').value; // Cambiado de 'area' a 'area-verbal'
-    let area = areaSelect;
+      const areaSelect = document.getElementById('area').value; // ← CORRECTO para formulario ESCRITA
     
     if (areaSelect === 'Otro') {
         area = document.getElementById('area-verbal-otro').value; // Cambiado de 'area-otro' a 'area-verbal-otro'
