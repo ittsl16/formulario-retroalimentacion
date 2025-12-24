@@ -2127,7 +2127,7 @@ async function iniciarSincronizacionAutomatica() {
         syncInterval = setInterval(async () => {
             console.log('⏰ Sincronización automática iniciada...');
             await sincronizarDatos();
-        }, 2 * 60 * 1000); // 2 minutos
+               }, 30 * 1000); // 
         
         console.log('✅ Sincronización automática iniciada (cada 2 minutos)');
     } else {
@@ -2809,6 +2809,43 @@ function setupUserInterface() {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
         showTab('form-escrita');
     }
+        // ⭐⭐ MOSTRAR BOTÓN DE SINCRONIZACIÓN PARA SUPERVISORES
+    if (currentUser === 'supervisor') {
+        // Crear botón si no existe
+        let syncBtn = document.getElementById('sync-now-supervisor');
+        if (!syncBtn) {
+            syncBtn = document.createElement('button');
+            syncBtn.id = 'sync-now-supervisor';
+            syncBtn.className = 'btn btn-primary';
+            syncBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Subir a la Nube';
+            
+            // Insertar en el header
+            const header = document.querySelector('header .button-group');
+            if (header) {
+                header.insertBefore(syncBtn, header.firstChild);
+            }
+        }
+        
+        // Configurar evento
+        syncBtn.onclick = async () => {
+            syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+            syncBtn.disabled = true;
+            
+            try {
+                const result = await saveAllData();
+                if (result) {
+                    mostrarNotificacion('✅ Datos subidos a la nube', 'success');
+                } else {
+                    mostrarNotificacion('❌ Error subiendo datos', 'error');
+                }
+            } catch (error) {
+                mostrarNotificacion('❌ Error: ' + error.message, 'error');
+            } finally {
+                syncBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Subir a la Nube';
+                syncBtn.disabled = false;
+            }
+        };
+    }
 }
 
 // ============================================
@@ -3288,7 +3325,34 @@ async function submitFormEscrita(e) {
     feedbacks.push(feedback);
     nextFolioEscrita++;
     
-    const saved = await saveAllData();
+        const saved = await saveAllData();
+    
+    // ⭐⭐ FORZAR SUBIDA A GITHUB PARA SUPERVISORES
+    if (currentUser === 'supervisor') {
+        try {
+            const result = await saveToGitHub(GITHUB_CONFIG.feedbackFile, feedbacks);
+            const countersResult = await saveToGitHub(GITHUB_CONFIG.countersFile, {
+                nextFolioEscrita: nextFolioEscrita,
+                nextFolioVerbal: nextFolioVerbal
+            });
+            
+            if (result.source === 'github') {
+                console.log('✅ Supervisor: Datos subidos a GitHub');
+                // Mostrar mensaje especial
+                const successMsg = document.getElementById('escrita-success');
+                successMsg.innerHTML = '<i class="fas fa-check-circle"></i><span>Retroalimentación guardada y subida a la nube.</span>';
+                successMsg.classList.remove('hidden');
+            } else {
+                console.log('⚠️ Supervisor: Datos solo locales');
+                // Mostrar advertencia
+                const successMsg = document.getElementById('escrita-success');
+                successMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Guardado local. Admin debe sincronizar.</span>';
+                successMsg.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.log('Supervisor: Error subiendo a GitHub:', error);
+        }
+    }
     
     if (saved) {
         const successMsg = document.getElementById('escrita-success');
@@ -3383,7 +3447,34 @@ async function submitFormVerbal(e) {
     feedbacks.push(feedback);
     nextFolioVerbal++;
     
-    const saved = await saveAllData();
+        const saved = await saveAllData();
+    
+    // ⭐⭐ FORZAR SUBIDA A GITHUB PARA SUPERVISORES
+    if (currentUser === 'supervisor') {
+        try {
+            const result = await saveToGitHub(GITHUB_CONFIG.feedbackFile, feedbacks);
+            const countersResult = await saveToGitHub(GITHUB_CONFIG.countersFile, {
+                nextFolioEscrita: nextFolioEscrita,
+                nextFolioVerbal: nextFolioVerbal
+            });
+            
+            if (result.source === 'github') {
+                console.log('✅ Supervisor: Datos subidos a GitHub');
+                // Mostrar mensaje especial
+                const successMsg = document.getElementById('escrita-success');
+                successMsg.innerHTML = '<i class="fas fa-check-circle"></i><span>Retroalimentación guardada y subida a la nube.</span>';
+                successMsg.classList.remove('hidden');
+            } else {
+                console.log('⚠️ Supervisor: Datos solo locales');
+                // Mostrar advertencia
+                const successMsg = document.getElementById('escrita-success');
+                successMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Guardado local. Admin debe sincronizar.</span>';
+                successMsg.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.log('Supervisor: Error subiendo a GitHub:', error);
+        }
+    }
     
     if (saved) {
         const successMsg = document.getElementById('verbal-success');
