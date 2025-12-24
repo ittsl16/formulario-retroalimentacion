@@ -585,6 +585,11 @@
                 padding: 20px;
                 margin: 20px auto;
             }
+
+                        .btn-warning {
+                width: 100%;
+                justify-content: center;
+            }
         }
         
         /* Modo solo formulario (sin admin) */
@@ -661,6 +666,35 @@
 /* Mejoras para canvas */
 .signature-canvas {
     touch-action: none;
+}
+.btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+    border: none;
+    padding: 12px 25px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-warning:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
 }
 
 /* === FIN NUEVAS REGLAS CSS === */
@@ -1161,9 +1195,15 @@
                     <button class="btn btn-secondary" id="export-excel">
                         <i class="fas fa-file-excel"></i> Exportar Excel
                     </button>
-                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <input type="date" id="filter-date">
-                    </div>
+
+                     <button class="btn btn-primary" id="sync-now">
+        <i class="fas fa-sync-alt"></i> Sincronizar Ahora
+    </button>
+    <!-- FIN DEL BOTÓN NUEVO -->
+    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+        <input type="date" id="filter-date">
+    </div> 
+                   
                     <button class="btn btn-outline" id="filter-apply">
                         <i class="fas fa-filter"></i> Filtrar
                     </button>
@@ -1474,6 +1514,9 @@ function handleLogout() {
     if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
         return;
     }
+    
+    // **AGREGAR ESTO: Detener sincronización**
+    detenerSincronizacion();
     
     clearSession();
     
@@ -1888,6 +1931,109 @@ async function saveAllData() {
         return false;
     }
 }
+// ============================================
+// MANEJADOR PARA BOTÓN SINCRONIZAR AHORA
+// ============================================
+
+async function syncNowHandler() {
+    const btn = document.getElementById('sync-now');
+    const originalHTML = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+    btn.disabled = true;
+    
+    try {
+        const exito = await sincronizarDatos();
+        
+        if (exito) {
+            // Mostrar mensaje de éxito
+            mostrarNotificacion('✅ Datos sincronizados correctamente', 'success');
+            mostrarEstadoGitHub();
+            // Actualizar dashboard si es admin
+            if (currentUser === 'admin') {
+                actualizarDashboard();
+            }
+        } else {
+            mostrarNotificacion('❌ Error al sincronizar datos', 'error');
+        }
+    } catch (error) {
+        console.error('Error en sincronización manual:', error);
+        mostrarNotificacion('❌ Error en sincronización: ' + error.message, 'error');
+    } finally {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+    }
+}
+
+// Función para mostrar notificaciones
+function mostrarNotificacion(mensaje, tipo = 'info') {
+    // Eliminar notificación anterior si existe
+    const notificacionAnterior = document.getElementById('sync-notification');
+    if (notificacionAnterior) {
+        notificacionAnterior.remove();
+    }
+    
+    const notificacion = document.createElement('div');
+    notificacion.id = 'sync-notification';
+    notificacion.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease-out;
+        max-width: 400px;
+    `;
+    
+    if (tipo === 'success') {
+        notificacion.style.backgroundColor = '#28a745';
+    } else if (tipo === 'error') {
+        notificacion.style.backgroundColor = '#dc3545';
+    } else {
+        notificacion.style.backgroundColor = '#17a2b8';
+    }
+    
+    notificacion.innerHTML = `
+        <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${mensaje}</span>
+        <button onclick="this.parentElement.remove()" 
+                style="background: none; border: none; color: white; cursor: pointer; margin-left: 10px;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(notificacion);
+    
+    // Auto-eliminar después de 5 segundos
+    setTimeout(() => {
+        if (notificacion.parentElement) {
+            notificacion.remove();
+        }
+    }, 5000);
+}
+
+// Agregar la animación CSS
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(style);
 
 // ============================================
 // FUNCIONES AUXILIARES
@@ -1948,6 +2094,88 @@ const lideres = [
     {id: "4497", nombre: "CORTEZ ACUÑA IGNACIO", rol: "SUPERVISOR SENIOR", area: "B"},
     {id: "73313", nombre: "HERNANDEZ GARDUÑO CARLOS ADRIAN", rol: "GERENTE", area: "GERENCIA"}
 ];
+
+// ============================================
+// SINCRONIZACIÓN AUTOMÁTICA
+// ============================================
+
+let syncInterval = null;
+
+async function iniciarSincronizacionAutomatica() {
+    console.log('🔍 Verificando si se debe iniciar sincronización...');
+    console.log('GitHub config:', {
+        token: GITHUB_CONFIG.token ? 'Sí' : 'No',
+        username: GITHUB_CONFIG.username,
+        currentUser: currentUser
+    });
+    
+    // Detener sincronización anterior si existe
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+        console.log('🔄 Sincronización anterior detenida');
+    }
+    
+    // Solo sincronizar si GitHub está configurado Y es admin
+    if (GITHUB_CONFIG.token && GITHUB_CONFIG.username) {
+        console.log('✅ GitHub configurado, iniciando sincronización...');
+        
+        // Sincronizar inmediatamente al iniciar
+        await sincronizarDatos();
+        
+        // Luego programar sincronización periódica
+        syncInterval = setInterval(async () => {
+            console.log('⏰ Sincronización automática iniciada...');
+            await sincronizarDatos();
+        }, 2 * 60 * 1000); // 2 minutos
+        
+        console.log('✅ Sincronización automática iniciada (cada 2 minutos)');
+    } else {
+        console.log('⚠️ GitHub no configurado, sincronización desactivada');
+    }
+}
+
+function detenerSincronizacion() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+        console.log('⏹️ Sincronización automática detenida');
+    }
+}
+
+async function sincronizarDatos() {
+    try {
+        console.log('🔄 Sincronizando datos con GitHub...');
+        const cargado = await loadAllData();
+        
+        if (cargado) {
+            console.log(`✅ Datos sincronizados: ${feedbacks.length} retroalimentaciones cargadas`);
+            
+            // Si el usuario actual es admin Y está viendo el panel admin, actualizar
+            if (currentUser === 'admin') {
+                const adminPanel = document.getElementById('admin');
+                if (adminPanel && !adminPanel.classList.contains('hidden')) {
+                    actualizarDashboard();
+                    console.log('📊 Dashboard actualizado');
+                }
+            }
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('❌ Error en sincronización:', error);
+        return false;
+    }
+}
+
+function detenerSincronizacion() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+        console.log('⏹️ Sincronización automática detenida');
+    }
+}
+
 
 // ============================================
 // FUNCIONES DE CONFIGURACIÓN GITHUB MEJORADAS
@@ -2033,9 +2261,13 @@ async function saveGitHubConfigFromApp() {
         await loadAllData();
         
         // Si es admin, actualizar dashboard
+               // Si es admin, actualizar dashboard
         if (currentUser === 'admin') {
             actualizarDashboard();
         }
+        
+        // Mostrar estado actualizado
+        mostrarEstadoGitHub();
         
     } catch (error) {
         console.error('Error en configuración GitHub:', error);
@@ -2526,6 +2758,12 @@ async function handleLogin() {
         cargarLideres();
         actualizarFechas();
         
+        // **AGREGAR ESTO: Iniciar sincronización si es admin**
+        if (currentUser === 'admin') {
+            console.log('👤 Admin detectado, iniciando sincronización...');
+            iniciarSincronizacionAutomatica();
+        }
+        
         showApp();
         setupUserInterface();
         
@@ -2738,6 +2976,7 @@ function setupEventListeners() {
     document.getElementById('export-pdf').addEventListener('click', openExportModal);
     document.getElementById('export-excel').addEventListener('click', exportExcel);
     document.getElementById('refresh-data').addEventListener('click', actualizarDashboard);
+    document.getElementById('sync-now').addEventListener('click', syncNowHandler);
     document.getElementById('filter-apply').addEventListener('click', aplicarFiltro);
     document.getElementById('filter-clear').addEventListener('click', limpiarFiltro);
     
@@ -2858,6 +3097,7 @@ function showTab(tabId) {
         // ESPECÍFICO PARA FORMULARIO VERBAL: Inicializar canvas de firmas
         if (tabId === 'form-verbal') {
             console.log('🔄 Inicializando canvas de formulario verbal...');
+            initializeVerbalCanvases();
             
             // 1. Canvas de firma del colaborador (verbal)
             const canvasColabVerbal = document.getElementById('signature-canvas-verbal-colaborador');
@@ -4033,6 +4273,217 @@ function generatePDF(feedbacksToExport, title, notes) {
     ventana.document.close();
     
     alert(`Se ha generado el reporte PDF con ${feedbacksOrdenados.length} retroalimentaciones.`);
+}
+
+// ============================================
+// VERIFICACIÓN VISUAL DE ESTADO GITHUB
+// ============================================
+
+function mostrarEstadoGitHub() {
+    // Eliminar estado anterior si existe
+    const estadoAnterior = document.getElementById('github-status-display');
+    if (estadoAnterior) estadoAnterior.remove();
+    
+    // Solo mostrar si estamos en panel de admin
+    const adminPanel = document.getElementById('admin');
+    if (!adminPanel || adminPanel.classList.contains('hidden')) return;
+    
+    const estadoDiv = document.createElement('div');
+    estadoDiv.id = 'github-status-display';
+    estadoDiv.style.cssText = `
+        padding: 12px 15px;
+        margin: 10px 0 20px 0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.3s;
+    `;
+    
+    // Verificar si hay datos pendientes de sincronizar
+    const datosLocales = localStorage.getItem('feedbacks.json');
+    const tieneDatosLocales = datosLocales && JSON.parse(datosLocales).length > 0;
+    
+    if (GITHUB_CONFIG.token && GITHUB_CONFIG.username) {
+        if (tieneDatosLocales) {
+            // Estado: Configurado pero con datos locales pendientes
+            estadoDiv.innerHTML = `
+                <div style="display: flex; align-items: center;">
+                    <i class="fas fa-exclamation-triangle" style="color: #ffc107; margin-right: 10px; font-size: 1.2rem;"></i>
+                    <div>
+                        <strong>GitHub: Datos pendientes de sincronizar</strong>
+                        <div style="font-size: 0.85rem; color: #666;">
+                            Hay datos guardados localmente que no están en la nube
+                            <span style="margin-left: 10px;">• Haga clic en "Sincronizar Ahora"</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.85rem;" 
+                        id="sync-pending-btn">
+                    <i class="fas fa-sync-alt"></i> Sincronizar Pendientes
+                </button>
+            `;
+            estadoDiv.style.backgroundColor = '#fff3cd';
+            estadoDiv.style.border = '1px solid #ffeaa7';
+            estadoDiv.style.color = '#856404';
+        } else {
+            // Estado: Configurado y sincronizado
+            estadoDiv.innerHTML = `
+                <div style="display: flex; align-items: center;">
+                    <i class="fas fa-check-circle" style="color: #28a745; margin-right: 10px; font-size: 1.2rem;"></i>
+                    <div>
+                        <strong>GitHub sincronizado</strong>
+                        <div style="font-size: 0.85rem; color: #666;">
+                            Repositorio: ${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}
+                            <span style="margin-left: 10px;">• Todos los datos están en la nube</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.85rem; margin-right: 5px;" 
+                            id="manual-sync-btn">
+                        <i class="fas fa-sync-alt"></i> Sincronizar
+                    </button>
+                    <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.85rem;" 
+                            id="view-repo-btn">
+                        <i class="fab fa-github"></i> Ver Repo
+                    </button>
+                </div>
+            `;
+            estadoDiv.style.backgroundColor = '#d4edda';
+            estadoDiv.style.border = '1px solid #c3e6cb';
+            estadoDiv.style.color = '#155724';
+        }
+    } else {
+        // Estado: No configurado
+        const totalDatos = feedbacks.length;
+        estadoDiv.innerHTML = `
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-exclamation-triangle" style="color: #dc3545; margin-right: 10px; font-size: 1.2rem;"></i>
+                <div>
+                    <strong>GitHub no configurado</strong>
+                    <div style="font-size: 0.85rem; color: #666;">
+                        ${totalDatos > 0 ? 
+                          `Tienes ${totalDatos} retroalimentaciones guardadas solo en este dispositivo` : 
+                          'Los datos se guardarán solo localmente en este dispositivo'}
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.85rem;" 
+                    id="config-now-btn">
+                <i class="fab fa-github"></i> Configurar
+            </button>
+        `;
+        estadoDiv.style.backgroundColor = '#f8d7da';
+        estadoDiv.style.border = '1px solid #f5c6cb';
+        estadoDiv.style.color = '#721c24';
+    }
+    
+    // Insertar después del título del panel admin
+    const adminHeader = adminPanel.querySelector('h2');
+    if (adminHeader) {
+        adminHeader.parentNode.insertBefore(estadoDiv, adminHeader.nextSibling);
+        
+               // Configurar botones - USAR onclick DIRECTAMENTE
+        setTimeout(() => {
+            const syncBtn = document.getElementById('manual-sync-btn');
+            const configBtn = document.getElementById('config-now-btn');
+            const syncPendingBtn = document.getElementById('sync-pending-btn');
+            const viewRepoBtn = document.getElementById('view-repo-btn');
+            
+            if (syncBtn) {
+                syncBtn.onclick = () => {
+                    document.getElementById('sync-now').click();
+                };
+            }
+            
+            if (syncPendingBtn) {
+                syncPendingBtn.onclick = async () => {
+                    // Forzar sincronización de datos locales
+                    const datosLocales = localStorage.getItem('feedbacks.json');
+                    if (datosLocales) {
+                        try {
+                            const datos = JSON.parse(datosLocales);
+                            if (datos.length > 0) {
+                                // Fusionar datos locales con los actuales
+                                feedbacks = [...feedbacks, ...datos.filter(d => 
+                                    !feedbacks.some(f => f.id === d.id)
+                                )];
+                                await saveAllData();
+                                localStorage.removeItem('feedbacks.json');
+                                mostrarNotificacion('✅ Datos locales sincronizados con GitHub', 'success');
+                                mostrarEstadoGitHub(); // Actualizar estado
+                                actualizarDashboard();
+                            }
+                        } catch (error) {
+                            console.error('Error sincronizando datos locales:', error);
+                            mostrarNotificacion('❌ Error sincronizando datos locales', 'error');
+                        }
+                    }
+                };
+            }
+            
+            if (configBtn) {
+                configBtn.onclick = () => {
+                    document.getElementById('btn-config-github-app').click();
+                };
+            }
+            
+            if (viewRepoBtn) {
+                viewRepoBtn.onclick = () => {
+                    window.open(`https://github.com/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}`, '_blank');
+                };
+            }
+        }, 50);
+    }
+}
+
+// Modificar la función iniciarSincronizacionAutomatica para que actualice el estado
+async function iniciarSincronizacionAutomatica() {
+    console.log('🔍 Verificando si se debe iniciar sincronización...');
+    console.log('GitHub config:', {
+        token: GITHUB_CONFIG.token ? 'Sí' : 'No',
+        username: GITHUB_CONFIG.username,
+        currentUser: currentUser
+    });
+    
+    // Detener sincronización anterior si existe
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+        console.log('🔄 Sincronización anterior detenida');
+    }
+    
+    // Solo sincronizar si GitHub está configurado Y es admin
+    if (GITHUB_CONFIG.token && GITHUB_CONFIG.username && currentUser === 'admin') {
+        console.log('✅ GitHub configurado, iniciando sincronización...');
+        
+        // Mostrar estado inicial
+        mostrarEstadoGitHub();
+        
+        // Sincronizar inmediatamente al iniciar
+        await sincronizarDatos();
+        
+        // Luego programar sincronización periódica
+        syncInterval = setInterval(async () => {
+            console.log('⏰ Sincronización automática iniciada...');
+            const exito = await sincronizarDatos();
+            if (exito) {
+                console.log('✅ Sincronización automática completada');
+            } else {
+                console.log('⚠️ Sincronización automática falló');
+            }
+        }, 2 * 60 * 1000); // 2 minutos
+        
+        console.log('✅ Sincronización automática iniciada (cada 2 minutos)');
+    } else {
+        console.log('⚠️ GitHub no configurado o no es admin, sincronización desactivada');
+        // Mostrar estado incluso si no está configurado
+        if (currentUser === 'admin') {
+            mostrarEstadoGitHub();
+        }
+    }
 }
     </script>
 </body>
