@@ -696,8 +696,220 @@
 .btn-warning:hover {
     background-color: #e0a800;
 }
+/* Mejoras para móvil */
+@media (max-width: 480px) {
+    .signature-canvas {
+        height: 120px !important;
+    }
+    
+    .btn {
+        padding: 14px 20px !important;
+        font-size: 15px !important;
+    }
+    
+    input, select, textarea {
+        font-size: 16px !important; /* Evita zoom en iOS */
+        padding: 14px !important;
+    }
+    
+    .logo-text h1 {
+        font-size: 1.2rem !important;
+        text-align: center;
+    }
+}
 
+/* Prevenir zoom en inputs en iOS */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea {
+    font-size: 16px;
+}
+
+/* Mejorar área de subida de imagen en móvil */
+.image-upload {
+    padding: 20px !important;
+    min-height: 120px !important;
+}
+/* ============================================ */
+/* OPTIMIZACIONES PARA MÓVIL (3G/4G) */
+/* ============================================ */
+
+/* Prevenir zoom automático en iOS */
+@media screen and (max-width: 768px) {
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="email"],
+    textarea,
+    select {
+        font-size: 16px !important;
+        padding: 16px 14px !important;
+    }
+    
+    .btn {
+        padding: 16px 20px !important;
+        font-size: 17px !important;
+    }
+    
+    .signature-canvas {
+        height: 130px !important;
+        touch-action: none;
+    }
+    
+    .image-upload {
+        padding: 25px 15px !important;
+        min-height: 140px !important;
+    }
+    
+    .image-upload i {
+        font-size: 56px !important;
+    }
+    
+    .logo-text h1 {
+        font-size: 1.3rem !important;
+        line-height: 1.3;
+    }
+    
+    .form-section h3 {
+        font-size: 1.1rem !important;
+        padding: 10px 0;
+    }
+    
+    /* Mejorar espacio en formularios */
+    .form-group {
+        margin-bottom: 25px !important;
+    }
+    
+    .form-row {
+        gap: 15px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    /* Botones más grandes para dedos */
+    .button-group .btn {
+        min-height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Ajustar modales en móvil */
+    .modal-content {
+        padding: 20px 15px !important;
+        margin: 10px !important;
+        width: calc(100% - 20px) !important;
+        max-height: 90vh !important;
+    }
+    
+    /* Ajustar tabla admin en móvil */
+    .table-container {
+        font-size: 14px;
+    }
+    
+    .table-container th,
+    .table-container td {
+        padding: 10px 8px !important;
+    }
+}
+
+/* Pantallas muy pequeñas (iPhone SE, etc) */
+@media screen and (max-width: 375px) {
+    .container {
+        padding: 10px !important;
+    }
+    
+    .content {
+        padding: 20px 15px !important;
+    }
+    
+    .nav-tab {
+        padding: 12px 8px !important;
+        font-size: 14px;
+    }
+    
+    .stat-card {
+        padding: 15px !important;
+    }
+    
+    .stat-icon {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 20px !important;
+    }
+}
+
+/* Mejorar feedback táctil */
+.btn:active {
+    transform: scale(0.98);
+    transition: transform 0.1s;
+}
+
+/* Indicador de carga overlay */
+#loading-overlay {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 /* === FIN NUEVAS REGLAS CSS === */
+/* Estilo para botón de subida supervisor */
+#sync-now-supervisor {
+    background: linear-gradient(to right, #28a745, #20c997);
+    border: none;
+    transition: all 0.3s;
+}
+
+#sync-now-supervisor:hover {
+    background: linear-gradient(to right, #218838, #1ba87e);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+#sync-now-supervisor:disabled {
+    opacity: 0.7;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Ajustes para móvil */
+@media (max-width: 768px) {
+    #sync-now-supervisor {
+        margin-right: 5px !important;
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+    }
+    
+    #sync-now-supervisor i {
+        font-size: 16px !important;
+    }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    header .button-group {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    #sync-now-supervisor {
+        order: 1;
+        width: calc(100% - 20px);
+        margin: 5px 10px;
+        justify-content: center;
+    }
+    
+    #btn-logout {
+        order: 2;
+        width: calc(100% - 20px);
+        margin: 5px 10px;
+        justify-content: center;
+    }
+}
 
     </style>
 </head>
@@ -2036,6 +2248,111 @@ style.textContent = `
 document.head.appendChild(style);
 
 // ============================================
+// INDICADOR DE CARGA PARA MÓVIL
+// ============================================
+
+function mostrarCargando(mensaje = 'Guardando...') {
+    // Eliminar cargando anterior si existe
+    ocultarCargando();
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'loading-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(2px);
+    `;
+    
+    overlay.innerHTML = `
+        <div style="
+            background: white;
+            padding: 30px 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            min-width: 280px;
+            max-width: 90%;
+            border-top: 5px solid var(--primary-color);
+        ">
+            <i class="fas fa-spinner fa-spin" style="
+                font-size: 42px;
+                color: var(--primary-color);
+                margin-bottom: 20px;
+                display: block;
+            "></i>
+            <p style="
+                font-weight: bold;
+                font-size: 18px;
+                margin: 0;
+                color: var(--dark-gray);
+            ">${mensaje}</p>
+            <p style="
+                font-size: 14px;
+                color: #666;
+                margin-top: 10px;
+            ">Por favor espera...</p>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Prevenir scroll en móvil
+    document.body.style.overflow = 'hidden';
+}
+
+function ocultarCargando() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+    
+    // Restaurar scroll
+    document.body.style.overflow = '';
+}
+
+function mostrarCargandoAdmin(mensaje = 'Sincronizando...') {
+    // Versión más pequeña para panel admin
+    const overlay = document.createElement('div');
+    overlay.id = 'admin-loading';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--primary-color);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
+    
+    overlay.innerHTML = `
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>${mensaje}</span>
+    `;
+    
+    document.body.appendChild(overlay);
+}
+
+function ocultarCargandoAdmin() {
+    const overlay = document.getElementById('admin-loading');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+// ============================================
 // FUNCIONES AUXILIARES
 // ============================================
 
@@ -2127,7 +2444,7 @@ async function iniciarSincronizacionAutomatica() {
         syncInterval = setInterval(async () => {
             console.log('⏰ Sincronización automática iniciada...');
             await sincronizarDatos();
-               }, 30 * 1000); // 
+              }, 2 * 60 * 1000); // 2 minutos (120 segundos)
         
         console.log('✅ Sincronización automática iniciada (cada 2 minutos)');
     } else {
@@ -2809,42 +3126,120 @@ function setupUserInterface() {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
         showTab('form-escrita');
     }
-        // ⭐⭐ MOSTRAR BOTÓN DE SINCRONIZACIÓN PARA SUPERVISORES
+    
+    // ⭐⭐ BOTÓN VISIBLE DE SUBIR A LA NUBE PARA SUPERVISORES
     if (currentUser === 'supervisor') {
-        // Crear botón si no existe
+        // Crear o actualizar botón
         let syncBtn = document.getElementById('sync-now-supervisor');
         if (!syncBtn) {
             syncBtn = document.createElement('button');
             syncBtn.id = 'sync-now-supervisor';
             syncBtn.className = 'btn btn-primary';
             syncBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Subir a la Nube';
+            syncBtn.title = 'Subir todos los datos a la nube';
+            syncBtn.style.cssText = `
+                margin-right: 10px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            `;
             
-            // Insertar en el header
-            const header = document.querySelector('header .button-group');
-            if (header) {
-                header.insertBefore(syncBtn, header.firstChild);
+            // Insertar en el header - ANTES del botón de salir
+            const headerButtons = document.querySelector('header .button-group');
+            const logoutBtn = document.getElementById('btn-logout');
+            
+            if (headerButtons && logoutBtn) {
+                headerButtons.insertBefore(syncBtn, logoutBtn);
+            } else if (headerButtons) {
+                headerButtons.appendChild(syncBtn);
             }
         }
         
-        // Configurar evento
+        // Asegurar que el botón sea visible
+        syncBtn.classList.remove('hidden');
+        syncBtn.style.display = 'flex';
+        
+        // Configurar evento click mejorado
         syncBtn.onclick = async () => {
+            const originalHTML = syncBtn.innerHTML;
             syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
             syncBtn.disabled = true;
             
+            // Mostrar indicador de carga
+            mostrarCargando('Subiendo todos los datos a la nube...');
+            
             try {
-                const result = await saveAllData();
-                if (result) {
-                    mostrarNotificacion('✅ Datos subidos a la nube', 'success');
-                } else {
-                    mostrarNotificacion('❌ Error subiendo datos', 'error');
+                // Guardar datos locales primero
+                const saved = await saveAllData();
+                
+                if (!saved) {
+                    throw new Error('Error al guardar datos localmente');
                 }
+                
+                // Forzar subida a GitHub
+                const githubResult = await saveToGitHub(GITHUB_CONFIG.feedbackFile, feedbacks);
+                const countersResult = await saveToGitHub(GITHUB_CONFIG.countersFile, {
+                    nextFolioEscrita: nextFolioEscrita,
+                    nextFolioVerbal: nextFolioVerbal
+                });
+                
+                if (githubResult.source === 'github') {
+                    // Mensaje según dispositivo
+                    if (window.innerWidth < 768) { // MÓVIL
+                        setTimeout(() => {
+                            alert('✅ Subida completa\n\n✓ Todos los datos subidos a la nube\n✓ El administrador ya puede verlos');
+                        }, 300);
+                    } else { // COMPUTADORA
+                        mostrarNotificacion('✅ Todos los datos subidos a la nube', 'success');
+                    }
+                    
+                    // Actualizar interfaz si hay notificación de estado
+                    mostrarEstadoGitHub();
+                    
+                } else {
+                    if (window.innerWidth < 768) { // MÓVIL
+                        setTimeout(() => {
+                            alert('⚠️ Solo guardado local\n\nNo se pudo conectar con la nube.\nLos datos están en este dispositivo.');
+                        }, 300);
+                    } else { // COMPUTADORA
+                        mostrarNotificacion('⚠️ Solo guardado local - Sin conexión a GitHub', 'error');
+                    }
+                }
+                
             } catch (error) {
-                mostrarNotificacion('❌ Error: ' + error.message, 'error');
+                console.error('Error subiendo datos:', error);
+                
+                if (window.innerWidth < 768) { // MÓVIL
+                    setTimeout(() => {
+                        alert('❌ Error de conexión\n\nVerifica tu internet e intenta nuevamente.\nLos datos están guardados localmente.');
+                    }, 300);
+                } else { // COMPUTADORA
+                    mostrarNotificacion('❌ Error: ' + error.message, 'error');
+                }
+                
             } finally {
-                syncBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Subir a la Nube';
+                // Restaurar botón
+                syncBtn.innerHTML = originalHTML;
                 syncBtn.disabled = false;
+                
+                // Ocultar indicador de carga
+                ocultarCargando();
             }
         };
+        
+        // Mostrar notificación inicial si hay datos sin subir
+        setTimeout(() => {
+            const datosLocales = localStorage.getItem('feedbacks.json');
+            if (datosLocales && JSON.parse(datosLocales).length > 0) {
+                if (window.innerWidth < 768) {
+                    setTimeout(() => {
+                        alert('💡 Tienes datos sin subir\n\nUsa el botón "Subir a la Nube" para que el administrador los vea.');
+                    }, 1000);
+                } else {
+                    mostrarNotificacion('💡 Tienes datos locales sin subir a la nube', 'info');
+                }
+            }
+        }, 2000);
     }
 }
 
@@ -3215,160 +3610,204 @@ function showTab(tabId) {
 async function submitFormEscrita(e) {
     e.preventDefault();
     
-    // **CORRECCIÓN CRÍTICA: Cambiar 'area-verbal' por 'area'**
-    const areaSelect = document.getElementById('area').value; // ← CAMBIADO
-    let area = areaSelect;
+    // Mostrar indicador de carga (ESPECIAL PARA MÓVIL)
+    mostrarCargando('Guardando retroalimentación...');
     
-    if (areaSelect === 'Otro') {
-        area = document.getElementById('area-otro').value; // ← CAMBIADO
-        if (!area) {
-            alert('Por favor especifique el área cuando selecciona "Otro"');
-            return;
-        }
-    }
-    
-    const liderSelect = document.getElementById('lider').value;
-    let liderNombre = '';
-    let liderInfo = {};
-    
-    if (liderSelect === 'otro') {
-        const nombre = document.getElementById('lider-otro-nombre').value;
-        const puesto = document.getElementById('lider-otro-puesto').value;
-        const areaLider = document.getElementById('lider-otro-area').value;
+    try {
+        // **CORRECCIÓN CRÍTICA: Cambiar 'area-verbal' por 'area'**
+        const areaSelect = document.getElementById('area').value;
+        let area = areaSelect;
         
-        if (!nombre || !puesto || !areaLider) {
-            alert('Por favor complete todos los campos del líder cuando selecciona "Otro"');
-            return;
+        if (areaSelect === 'Otro') {
+            area = document.getElementById('area-otro').value;
+            if (!area) {
+                alert('Por favor especifique el área cuando selecciona "Otro"');
+                ocultarCargando();
+                return;
+            }
         }
         
-        liderNombre = `${nombre} - ${puesto} (${areaLider})`;
-        liderInfo = {
-            id: 'otro_' + Date.now(),
-            nombre: nombre,
-            rol: puesto,
-            area: areaLider,
-            esOtro: true
-        };
-    } else {
-        const liderSeleccionado = lideres.find(l => l.id === liderSelect);
-        if (liderSeleccionado) {
-            liderNombre = `${liderSeleccionado.nombre} - ${liderSeleccionado.rol} (${liderSeleccionado.area})`;
+        const liderSelect = document.getElementById('lider').value;
+        let liderNombre = '';
+        let liderInfo = {};
+        
+        if (liderSelect === 'otro') {
+            const nombre = document.getElementById('lider-otro-nombre').value;
+            const puesto = document.getElementById('lider-otro-puesto').value;
+            const areaLider = document.getElementById('lider-otro-area').value;
+            
+            if (!nombre || !puesto || !areaLider) {
+                alert('Por favor complete todos los campos del líder cuando selecciona "Otro"');
+                ocultarCargando();
+                return;
+            }
+            
+            liderNombre = `${nombre} - ${puesto} (${areaLider})`;
             liderInfo = {
-                ...liderSeleccionado,
-                esOtro: false
+                id: 'otro_' + Date.now(),
+                nombre: nombre,
+                rol: puesto,
+                area: areaLider,
+                esOtro: true
             };
         } else {
-            alert('Por favor seleccione un líder válido');
-            return;
-        }
-    }
-    
-    const cuadrilla = document.getElementById('cuadrilla-colaborador').value;
-    const numEmpleado = document.getElementById('num-empleado').value;
-    const descripcionImpacto = document.getElementById('descripcion-impacto').value;
-    const compromiso = document.getElementById('compromiso').value;
-    
-    const checkboxesImpacto = document.querySelectorAll('input[name="impacto"]:checked');
-    if (checkboxesImpacto.length === 0) {
-        alert('Por favor seleccione al menos un tipo de impacto');
-        return;
-    }
-    
-    let causas = [];
-    let explicacionCausa = '';
-    let accionDiferente = '';
-    
-    const seccionColaborador = document.getElementById('seccion-colaborador');
-    if (!seccionColaborador.classList.contains('hidden')) {
-        const checkboxesCausa = document.querySelectorAll('input[name="causa-problema"]:checked');
-        if (checkboxesCausa.length === 0) {
-            alert('Por favor seleccione al menos una causa del problema en la sección del colaborador');
-            return;
-        }
-        
-        causas = Array.from(checkboxesCausa).map(cb => cb.value);
-        explicacionCausa = document.getElementById('explicacion-causa-colaborador').value;
-        accionDiferente = document.getElementById('accion-diferente').value;
-    }
-    
-    if (!area || !liderSelect || !cuadrilla || !numEmpleado || !descripcionImpacto || !compromiso) {
-        alert('Por favor complete todos los campos requeridos (*)');
-        return;
-    }
-    
-    const firmas = capturarFirmas('escrita');
-    
-    const impactos = Array.from(checkboxesImpacto).map(cb => cb.value);
-    
-    const feedback = {
-        id: Date.now(),
-        folio: document.getElementById('folio-escrita').value,
-        fecha: document.getElementById('fecha-escrita').value,
-        tipo: 'Escrita',
-        subtipo: document.querySelector('input[name="tipo-feedback-escrita"]:checked').value,
-        area,
-        liderId: liderSelect,
-        liderNombre: liderNombre,
-        liderInfo: liderInfo,
-        cuadrillaColaborador: cuadrilla,
-        numEmpleado,
-        impactos: impactos,
-        descripcionImpacto,
-        causas: causas,
-        explicacionCausa: explicacionCausa,
-        accionDiferente: accionDiferente,
-        compromiso,
-        firmas: firmas,
-        timestamp: new Date().toISOString()
-    };
-    
-    feedbacks.push(feedback);
-    nextFolioEscrita++;
-    
-        const saved = await saveAllData();
-    
-    // ⭐⭐ FORZAR SUBIDA A GITHUB PARA SUPERVISORES
-    if (currentUser === 'supervisor') {
-        try {
-            const result = await saveToGitHub(GITHUB_CONFIG.feedbackFile, feedbacks);
-            const countersResult = await saveToGitHub(GITHUB_CONFIG.countersFile, {
-                nextFolioEscrita: nextFolioEscrita,
-                nextFolioVerbal: nextFolioVerbal
-            });
-            
-            if (result.source === 'github') {
-                console.log('✅ Supervisor: Datos subidos a GitHub');
-                // Mostrar mensaje especial
-                const successMsg = document.getElementById('escrita-success');
-                successMsg.innerHTML = '<i class="fas fa-check-circle"></i><span>Retroalimentación guardada y subida a la nube.</span>';
-                successMsg.classList.remove('hidden');
+            const liderSeleccionado = lideres.find(l => l.id === liderSelect);
+            if (liderSeleccionado) {
+                liderNombre = `${liderSeleccionado.nombre} - ${liderSeleccionado.rol} (${liderSeleccionado.area})`;
+                liderInfo = {
+                    ...liderSeleccionado,
+                    esOtro: false
+                };
             } else {
-                console.log('⚠️ Supervisor: Datos solo locales');
-                // Mostrar advertencia
-                const successMsg = document.getElementById('escrita-success');
-                successMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Guardado local. Admin debe sincronizar.</span>';
-                successMsg.classList.remove('hidden');
+                alert('Por favor seleccione un líder válido');
+                ocultarCargando();
+                return;
             }
-        } catch (error) {
-            console.log('Supervisor: Error subiendo a GitHub:', error);
         }
-    }
-    
-    if (saved) {
-        const successMsg = document.getElementById('escrita-success');
-        successMsg.classList.remove('hidden');
         
-        setTimeout(() => {
-            successMsg.classList.add('hidden');
-        }, 5000);
+        const cuadrilla = document.getElementById('cuadrilla-colaborador').value;
+        const numEmpleado = document.getElementById('num-empleado').value;
+        const descripcionImpacto = document.getElementById('descripcion-impacto').value;
+        const compromiso = document.getElementById('compromiso').value;
         
-        resetFormEscrita();
-        
-        if (currentUser === 'admin') {
-            actualizarDashboard();
+        const checkboxesImpacto = document.querySelectorAll('input[name="impacto"]:checked');
+        if (checkboxesImpacto.length === 0) {
+            alert('Por favor seleccione al menos un tipo de impacto');
+            ocultarCargando();
+            return;
         }
-    } else {
-        alert('Error al guardar los datos. Intente nuevamente.');
+        
+        let causas = [];
+        let explicacionCausa = '';
+        let accionDiferente = '';
+        
+        const seccionColaborador = document.getElementById('seccion-colaborador');
+        if (!seccionColaborador.classList.contains('hidden')) {
+            const checkboxesCausa = document.querySelectorAll('input[name="causa-problema"]:checked');
+            if (checkboxesCausa.length === 0) {
+                alert('Por favor seleccione al menos una causa del problema en la sección del colaborador');
+                ocultarCargando();
+                return;
+            }
+            
+            causas = Array.from(checkboxesCausa).map(cb => cb.value);
+            explicacionCausa = document.getElementById('explicacion-causa-colaborador').value;
+            accionDiferente = document.getElementById('accion-diferente').value;
+        }
+        
+        if (!area || !liderSelect || !cuadrilla || !numEmpleado || !descripcionImpacto || !compromiso) {
+            alert('Por favor complete todos los campos requeridos (*)');
+            ocultarCargando();
+            return;
+        }
+        
+        const firmas = capturarFirmas('escrita');
+        
+        const impactos = Array.from(checkboxesImpacto).map(cb => cb.value);
+        
+        const feedback = {
+            id: Date.now(),
+            folio: document.getElementById('folio-escrita').value,
+            fecha: document.getElementById('fecha-escrita').value,
+            tipo: 'Escrita',
+            subtipo: document.querySelector('input[name="tipo-feedback-escrita"]:checked').value,
+            area,
+            liderId: liderSelect,
+            liderNombre: liderNombre,
+            liderInfo: liderInfo,
+            cuadrillaColaborador: cuadrilla,
+            numEmpleado,
+            impactos: impactos,
+            descripcionImpacto,
+            causas: causas,
+            explicacionCausa: explicacionCausa,
+            accionDiferente: accionDiferente,
+            compromiso,
+            firmas: firmas,
+            timestamp: new Date().toISOString()
+        };
+        
+        feedbacks.push(feedback);
+        nextFolioEscrita++;
+        
+        const saved = await saveAllData();
+        
+        // ⭐⭐ FORZAR SUBIDA A GITHUB PARA SUPERVISORES
+        if (currentUser === 'supervisor') {
+            try {
+                const result = await saveToGitHub(GITHUB_CONFIG.feedbackFile, feedbacks);
+                const countersResult = await saveToGitHub(GITHUB_CONFIG.countersFile, {
+                    nextFolioEscrita: nextFolioEscrita,
+                    nextFolioVerbal: nextFolioVerbal
+                });
+                
+                if (result.source === 'github') {
+                    // Mostrar mensaje adaptado al dispositivo
+                    if (window.innerWidth < 768) { // MÓVIL
+                        setTimeout(() => {
+                            alert('✅ Guardado exitoso\n\n✓ Datos subidos a la nube\n✓ El administrador ya puede ver esta retroalimentación');
+                        }, 300);
+                    } else { // COMPUTADORA
+                        const successMsg = document.getElementById('escrita-success');
+                        successMsg.innerHTML = '<i class="fas fa-check-circle"></i><span>Retroalimentación guardada y subida a la nube.</span>';
+                        successMsg.classList.remove('hidden');
+                    }
+                } else {
+                    if (window.innerWidth < 768) { // MÓVIL
+                        setTimeout(() => {
+                            alert('⚠️ Guardado local\n\nLos datos se guardaron en este dispositivo.\nEl administrador los sincronizará más tarde.');
+                        }, 300);
+                    } else { // COMPUTADORA
+                        const successMsg = document.getElementById('escrita-success');
+                        successMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Guardado local. Admin debe sincronizar.</span>';
+                        successMsg.classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                console.log('Supervisor: Error subiendo a GitHub:', error);
+                if (window.innerWidth < 768) { // MÓVIL
+                    setTimeout(() => {
+                        alert('⚠️ Guardado local\n\nError al subir a la nube.\nLos datos están guardados en este dispositivo.');
+                    }, 300);
+                }
+            }
+        }
+        
+        if (saved) {
+            // Para administradores, mantener el comportamiento original
+            if (currentUser === 'admin') {
+                const successMsg = document.getElementById('escrita-success');
+                successMsg.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    successMsg.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Limpiar formulario después de guardar
+            resetFormEscrita();
+            
+            // Actualizar dashboard si es admin
+            if (currentUser === 'admin') {
+                actualizarDashboard();
+            }
+        } else {
+            alert('Error al guardar los datos. Intente nuevamente.');
+        }
+        
+    } catch (error) {
+        console.error('Error en submitFormEscrita:', error);
+        
+        // Mensaje de error según dispositivo
+        if (window.innerWidth < 768) {
+            alert('❌ Error al guardar\n\nPor favor intenta nuevamente.');
+        } else {
+            alert('❌ Error: ' + error.message);
+        }
+        
+    } finally {
+        // Ocultar indicador de carga con pequeño delay para que se vea
+        setTimeout(ocultarCargando, 500);
     }
 }
 
